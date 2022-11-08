@@ -1,12 +1,13 @@
-using Rn.Timerr.Models;
+﻿using Rn.Timerr.Models;
 
 namespace Rn.Timerr.Jobs;
 
 interface IRunnableJob
 {
   string Name { get; }
+  string ConfigKey { get; }
 
   bool CanRun(DateTime currentTime);
 
-  Task<JobOutcome> RunAsync(JobConfiguration jobConfig);
+  Task<JobOutcome> RunAsync(JobOptions jobConfig);
 }

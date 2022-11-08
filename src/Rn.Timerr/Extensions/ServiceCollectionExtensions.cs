@@ -5,6 +5,7 @@ using RnCore.Abstractions;
 using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
+using Rn.Timerr.Providers;
 
 namespace Rn.Timerr.Extensions;
 
@@ -20,9 +21,13 @@ static class ServiceCollectionExtensions
       .AddSingleton<IDirectoryAbstraction, DirectoryAbstraction>()
       .AddSingleton<IFileAbstraction, FileAbstraction>()
       .AddSingleton<IDateTimeAbstraction, DateTimeAbstraction>()
+      .AddSingleton<IPathAbstraction, PathAbstraction>()
 
       // Services
       .AddSingleton<IJobRunnerService, JobRunnerService>()
+
+      // Providers
+      .AddSingleton<IJobConfigProvider, JobConfigProvider>()
 
       // Register runnable jobs
       .RegisterImplementations(Assembly.GetExecutingAssembly(), typeof(IRunnableJob));
