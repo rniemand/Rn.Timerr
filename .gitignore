@@ -1,0 +1,35 @@
+# User-specific files
+*.suo
+*.user
+
+# Build results
+artifacts/
+tools/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+bin/
+Bin/
+obj/
+Obj/
+
+# Visual Studio cache/options directory
+.vs/
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+# SonarQube related files
+\.github/\.sonarqube/
+
+# NCrunch
+*.ncrunchsolution
+*.crunchsolution\.*
+*.executiontimes\.*
