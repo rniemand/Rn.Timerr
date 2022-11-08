@@ -1,10 +1,7 @@
-// See https://aka.ms/new-console-template for more information
-
 using Microsoft.Extensions.DependencyInjection;
 using Rn.Timerr;
-using RnCore.Logging;
+using Rn.Timerr.Services;
 
-var logger = DIContainer.Services.GetRequiredService<ILoggerAdapter<Program>>();
-
-
-logger.LogInformation("Hello world");
+await DIContainer.Services
+  .GetRequiredService<IJobRunnerService>()
+  .RunJobsAsync();
