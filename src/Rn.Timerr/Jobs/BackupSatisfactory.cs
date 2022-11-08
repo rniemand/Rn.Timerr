@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using System.Text;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Models;
 using RnCore.Abstractions;
@@ -15,22 +14,22 @@ class BackupSatisfactory : IRunnableJob
   private string _sourcePath = string.Empty;
   private string _destPath = string.Empty;
   private string _fileName = string.Empty;
-  private bool _overwriteExisting = false;
+  private bool _overwriteExisting;
 
   private readonly ILoggerAdapter<BackupSatisfactory> _logger;
   private readonly IDirectoryAbstraction _directory;
-  private readonly IPathAbstraction _path;
   private readonly IFileAbstraction _file;
+  private readonly IPathAbstraction _path;
 
   public BackupSatisfactory(ILoggerAdapter<BackupSatisfactory> logger,
     IDirectoryAbstraction directory,
-    IPathAbstraction path,
-    IFileAbstraction file)
+    IFileAbstraction file,
+    IPathAbstraction path)
   {
     _logger = logger;
     _directory = directory;
-    _path = path;
     _file = file;
+    _path = path;
   }
 
   public bool CanRun(DateTime currentTime)
@@ -45,7 +44,7 @@ class BackupSatisfactory : IRunnableJob
     if (!ValidateDestinations())
       return new JobOutcome(JobState.Failed);
 
-    var fileName = Path.Combine(_destPath, GenerateFileName(jobConfig));
+    var fileName = _path.Combine(_destPath, GenerateFileName(jobConfig));
     if (_file.Exists(fileName) && !_overwriteExisting)
     {
       _logger.LogInformation("File {path} already exists, skipping backup", fileName);
@@ -61,7 +60,7 @@ class BackupSatisfactory : IRunnableJob
     _logger.LogDebug("Backing up saved files to: {file}", fileName);
     ZipFile.CreateFromDirectory(_sourcePath, fileName, CompressionLevel.Optimal, true);
     _logger.LogInformation("Completed: {path} ({size})", fileName, new FileInfo(fileName).Length);
-    
+
     await Task.CompletedTask;
     return new JobOutcome(JobState.Succeeded);
   }
