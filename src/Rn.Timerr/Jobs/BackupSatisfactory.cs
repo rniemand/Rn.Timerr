@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using Rn.Timerr.Enums;
+using Rn.Timerr.Extensions;
 using Rn.Timerr.Models;
 using RnCore.Abstractions;
 using RnCore.Logging;
@@ -14,6 +15,7 @@ class BackupSatisfactory : IRunnableJob
   private string _sourcePath = string.Empty;
   private string _destPath = string.Empty;
   private string _fileName = string.Empty;
+  private int _tickIntervalMin = 10;
   private bool _overwriteExisting;
 
   private readonly ILoggerAdapter<BackupSatisfactory> _logger;
@@ -32,19 +34,26 @@ class BackupSatisfactory : IRunnableJob
     _path = path;
   }
 
-  public bool CanRun(DateTime currentTime)
+  public bool CanRun(JobOptions jobOptions)
   {
+    if (!jobOptions.State.HasStateKey("NextRunTime"))
+      return true;
+
+    var nextRunTime = jobOptions.State.GetDateTimeValue("NextRunTime");
+    if (nextRunTime> jobOptions.JobStartTime)
+      return false;
+
     return true;
   }
 
-  public async Task<JobOutcome> RunAsync(JobOptions jobConfig)
+  public async Task<JobOutcome> RunAsync(JobOptions jobOptions)
   {
-    SetConfiguration(jobConfig);
+    SetConfiguration(jobOptions);
 
     if (!ValidateDestinations())
       return new JobOutcome(JobState.Failed);
 
-    var fileName = _path.Combine(_destPath, GenerateFileName(jobConfig));
+    var fileName = _path.Combine(_destPath, GenerateFileName(jobOptions));
     if (_file.Exists(fileName) && !_overwriteExisting)
     {
       _logger.LogInformation("File {path} already exists, skipping backup", fileName);
@@ -60,6 +69,9 @@ class BackupSatisfactory : IRunnableJob
     _logger.LogDebug("Backing up saved files to: {file}", fileName);
     ZipFile.CreateFromDirectory(_sourcePath, fileName, CompressionLevel.Optimal, true);
     _logger.LogInformation("Completed: {path} ({size})", fileName, new FileInfo(fileName).Length);
+
+    jobOptions.State["NextRunTime"] = jobOptions.JobStartTime.AddMinutes(_tickIntervalMin);
+    _logger.LogDebug("Scheduled next tick for: {time}", jobOptions.State["NextRunTime"]);
 
     await Task.CompletedTask;
     return new JobOutcome(JobState.Succeeded);
@@ -79,6 +91,7 @@ class BackupSatisfactory : IRunnableJob
     _sourcePath = jobConfig.Config.GetStringValue("Source");
     _destPath = jobConfig.Config.GetStringValue("Destination");
     _fileName = jobConfig.Config.GetStringValue("BackupFileName");
+    _tickIntervalMin = jobConfig.Config.GetIntValue("TickIntervalMin", 10);
     _overwriteExisting = jobConfig.Config.GetBoolValue("OverwriteExisting", false);
 
     if (string.IsNullOrWhiteSpace(_sourcePath))
@@ -115,10 +128,10 @@ class BackupSatisfactory : IRunnableJob
   }
 
   private string GenerateFileName(JobOptions jobConfig) => _fileName
-    .Replace("{yyyy}", jobConfig.CurrentDateTime.Year.ToString("D"))
-    .Replace("{mm}", jobConfig.CurrentDateTime.Month.ToString("D").PadLeft(2, '0'))
-    .Replace("{dd}", jobConfig.CurrentDateTime.Day.ToString("D").PadLeft(2, '0'))
-    .Replace("{hh}", jobConfig.CurrentDateTime.Hour.ToString("D").PadLeft(2, '0'))
-    .Replace("{mm}", jobConfig.CurrentDateTime.Minute.ToString("D").PadLeft(2, '0'))
-    .Replace("{ss}", jobConfig.CurrentDateTime.Second.ToString("D").PadLeft(2, '0'));
+    .Replace("{yyyy}", jobConfig.JobStartTime.Year.ToString("D"))
+    .Replace("{mm}", jobConfig.JobStartTime.Month.ToString("D").PadLeft(2, '0'))
+    .Replace("{dd}", jobConfig.JobStartTime.Day.ToString("D").PadLeft(2, '0'))
+    .Replace("{hh}", jobConfig.JobStartTime.Hour.ToString("D").PadLeft(2, '0'))
+    .Replace("{mm}", jobConfig.JobStartTime.Minute.ToString("D").PadLeft(2, '0'))
+    .Replace("{ss}", jobConfig.JobStartTime.Second.ToString("D").PadLeft(2, '0'));
 }

@@ -6,6 +6,7 @@ using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
 using Rn.Timerr.Providers;
+using Rn.Timerr.Helpers;
 
 namespace Rn.Timerr.Extensions;
 
@@ -29,6 +30,9 @@ static class ServiceCollectionExtensions
       // Providers
       .AddSingleton<IJobConfigProvider, JobConfigProvider>()
 
+      // Helpers
+      .AddSingleton<IJsonHelper, JsonHelper>()
+      
       // Register runnable jobs
       .RegisterImplementations(Assembly.GetExecutingAssembly(), typeof(IRunnableJob));
   }

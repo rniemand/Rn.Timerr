@@ -3,6 +3,9 @@ using Rn.Timerr.Models;
 using Rn.Timerr.Providers;
 using RnCore.Abstractions;
 using RnCore.Logging;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using Rn.Timerr.Helpers;
 
 namespace Rn.Timerr.Services;
 
@@ -16,18 +19,36 @@ class JobRunnerService : IJobRunnerService
   private readonly ILoggerAdapter<JobRunnerService> _logger;
   private readonly IDateTimeAbstraction _dateTime;
   private readonly IJobConfigProvider _jobConfigProvider;
+  private readonly IJsonHelper _jsonHelper;
+  private readonly IPathAbstraction _path;
+  private readonly IFileAbstraction _file;
   private readonly List<IRunnableJob> _jobs;
+
+  private readonly string _stateDir;
+  private readonly Dictionary<string, Dictionary<string, object>> _jobStates = new();
 
   public JobRunnerService(
     ILoggerAdapter<JobRunnerService> logger,
     IDateTimeAbstraction dateTime,
     IJobConfigProvider jobConfigProvider,
+    IJsonHelper jsonHelper,
+    IPathAbstraction path,
+    IFileAbstraction file,
+    IDirectoryAbstraction directory,
     IEnumerable<IRunnableJob> runnableJobs)
   {
     _logger = logger;
     _dateTime = dateTime;
     _jobConfigProvider = jobConfigProvider;
+    _jsonHelper = jsonHelper;
+    _path = path;
+    _file = file;
     _jobs = runnableJobs.ToList();
+
+    // Ensure that we have a state directory to work with
+    _stateDir = ExeRelativeDir("job-states");
+    if (!directory.Exists(_stateDir))
+      directory.CreateDirectory(_stateDir);
   }
 
   public async Task RunJobsAsync()
@@ -37,16 +58,65 @@ class JobRunnerService : IJobRunnerService
 
     foreach (var job in _jobs)
     {
-      if(!job.CanRun(_dateTime.Now))
-        continue;
-
-      await job.RunAsync(new JobOptions
+      var jobOptions = new JobOptions
       {
         Config = _jobConfigProvider.GetJobConfig(job.ConfigKey),
-        CurrentDateTime = _dateTime.Now
-      });
+        JobStartTime = _dateTime.Now,
+        State = GetJobState(job)
+      };
+
+      if (!job.CanRun(jobOptions))
+        continue;
+
+      await job.RunAsync(jobOptions);
+      PersistJobState(job, jobOptions);
     }
 
     _logger.LogInformation("Completed tick...");
   }
+
+
+  private void PersistJobState(IRunnableJob job, JobOptions jobOptions)
+  {
+    var stateFile = GenerateStateFileName(job);
+
+    if (_file.Exists(stateFile))
+      _file.Delete(stateFile);
+
+    var rawJson = _jsonHelper.SerializeObject(jobOptions.State, true);
+    _file.WriteAllText(stateFile, rawJson);
+  }
+
+  private Dictionary<string, object> GetJobState(IRunnableJob job)
+  {
+    if (_jobStates.ContainsKey(job.ConfigKey))
+      return _jobStates[job.ConfigKey];
+
+    var stateFile = GenerateStateFileName(job);
+
+    if (!_file.Exists(stateFile))
+    {
+      var rawJson = _jsonHelper.SerializeObject(new Dictionary<string, object>(), true);
+      _file.WriteAllText(stateFile, rawJson);
+    }
+
+    _jobStates[job.ConfigKey] = _jsonHelper.DeserializeObject<Dictionary<string, object>>(_file.ReadAllText(stateFile));
+    return _jobStates[job.ConfigKey];
+  }
+
+  private static string ExeRelativeDir(string path)
+  {
+    path = ExeRelativeFile(path);
+    if (!path.EndsWith('/'))
+      path += '/';
+    return path;
+  }
+
+  private static string ExeRelativeFile(string path) =>
+    NormalizePath(Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), path));
+
+  [return: NotNullIfNotNull("path")]
+  private static string? NormalizePath(string? path) => path?.Replace("\\", "/");
+
+  private string GenerateStateFileName(IRunnableJob job) => _path.Combine(_stateDir, $"{job.ConfigKey}.json");
 }
