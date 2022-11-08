@@ -2,7 +2,6 @@ using Rn.Timerr.Jobs;
 using Rn.Timerr.Models;
 using Rn.Timerr.Providers;
 using RnCore.Abstractions;
-using RnCore.Logging;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Rn.Timerr.Helpers;
@@ -16,7 +15,6 @@ interface IJobRunnerService
 
 class JobRunnerService : IJobRunnerService
 {
-  private readonly ILoggerAdapter<JobRunnerService> _logger;
   private readonly IDateTimeAbstraction _dateTime;
   private readonly IJobConfigProvider _jobConfigProvider;
   private readonly IJsonHelper _jsonHelper;
@@ -28,7 +26,6 @@ class JobRunnerService : IJobRunnerService
   private readonly Dictionary<string, Dictionary<string, object>> _jobStates = new();
 
   public JobRunnerService(
-    ILoggerAdapter<JobRunnerService> logger,
     IDateTimeAbstraction dateTime,
     IJobConfigProvider jobConfigProvider,
     IJsonHelper jsonHelper,
@@ -37,7 +34,6 @@ class JobRunnerService : IJobRunnerService
     IDirectoryAbstraction directory,
     IEnumerable<IRunnableJob> runnableJobs)
   {
-    _logger = logger;
     _dateTime = dateTime;
     _jobConfigProvider = jobConfigProvider;
     _jsonHelper = jsonHelper;
@@ -71,8 +67,6 @@ class JobRunnerService : IJobRunnerService
       await job.RunAsync(jobOptions);
       PersistJobState(job, jobOptions);
     }
-
-    _logger.LogInformation("Completed tick...");
   }
 
 

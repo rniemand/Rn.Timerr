@@ -2,6 +2,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Rn.Timerr;
 using Rn.Timerr.Services;
 
-await DIContainer.Services
-  .GetRequiredService<IJobRunnerService>()
-  .RunJobsAsync();
+var jobRunner = DIContainer.Services.GetRequiredService<IJobRunnerService>();
+
+while (true)
+{
+  await jobRunner.RunJobsAsync();
+  Console.Write(".");
+  await Task.Delay(10 * 1000);
+}
