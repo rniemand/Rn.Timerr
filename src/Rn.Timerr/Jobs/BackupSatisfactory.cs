@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Extensions;
 using Rn.Timerr.Models;
@@ -15,8 +16,10 @@ class BackupSatisfactory : IRunnableJob
   private string _sourcePath = string.Empty;
   private string _destPath = string.Empty;
   private string _fileName = string.Empty;
+  private Regex _managedSaveRx = new(".*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
   private int _tickIntervalMin = 10;
   private bool _overwriteExisting;
+  private bool _manageSaves;
 
   private readonly ILoggerAdapter<BackupSatisfactory> _logger;
   private readonly IDirectoryAbstraction _directory;
@@ -34,13 +37,14 @@ class BackupSatisfactory : IRunnableJob
     _path = path;
   }
 
+  // Interface methods
   public bool CanRun(JobOptions jobOptions)
   {
     if (!jobOptions.State.HasStateKey("NextRunTime"))
       return true;
 
     var nextRunTime = jobOptions.State.GetDateTimeValue("NextRunTime");
-    if (nextRunTime> jobOptions.JobStartTime)
+    if (nextRunTime > jobOptions.JobStartTime)
       return false;
 
     return true;
@@ -52,6 +56,15 @@ class BackupSatisfactory : IRunnableJob
 
     if (!ValidateDestinations())
       return new JobOutcome(JobState.Failed);
+
+    await Task.CompletedTask;
+    return BackupGameFiles(jobOptions);
+  }
+
+  // Game backup methods
+  private JobOutcome BackupGameFiles(JobOptions jobOptions)
+  {
+    ManageGameSaves();
 
     var fileName = _path.Combine(_destPath, GenerateFileName(jobOptions));
     if (_file.Exists(fileName) && !_overwriteExisting)
@@ -73,8 +86,93 @@ class BackupSatisfactory : IRunnableJob
     jobOptions.State["NextRunTime"] = jobOptions.JobStartTime.AddMinutes(_tickIntervalMin);
     _logger.LogDebug("Scheduled next tick for: {time}", jobOptions.State["NextRunTime"]);
 
-    await Task.CompletedTask;
     return new JobOutcome(JobState.Succeeded);
+  }
+
+  private void ManageGameSaves()
+  {
+    if (!_manageSaves)
+      return;
+
+    var managedSavesDir = _path.Join(_destPath, "managed-saves");
+    EnsureManagedSavesDir(managedSavesDir);
+
+    var manageableFiles = GetManageableFiles();
+    if (manageableFiles.Count == 0)
+      return;
+
+    _logger.LogInformation("Found {count} file(s) to manage", manageableFiles.Count);
+
+    var fileDateRanges = manageableFiles
+      .OrderBy(f => f.LastWriteTime)
+      .Select(f => ToStartOfDay(f.LastWriteTime))
+      .Distinct()
+      .ToList();
+
+    foreach (var baseDate in fileDateRanges)
+      ManageDaysSaveFiles(managedSavesDir, manageableFiles.Where(f => ToStartOfDay(f.LastWriteTime) == baseDate));
+  }
+
+
+  // Helper methods
+  private void ManageDaysSaveFiles(string manageDir, IEnumerable<FileInfo> files)
+  {
+    var saveFiles = files
+      .OrderBy(f => f.LastWriteTime)
+      .ToList();
+
+    if (saveFiles.Count == 0)
+      return;
+
+    var lastDailySaveFile = saveFiles.Last();
+    var dateString = ToStartOfDay(lastDailySaveFile.LastWriteTime).ToString("yyyy-MM-dd");
+    _logger.LogInformation("Selecting '{lastSave}' as daily save file for {date}", lastDailySaveFile.Name, dateString);
+
+    var filePath = _path.Combine(manageDir, $"Satisfactory_Daily_{dateString}.zip");
+    _file.Move(lastDailySaveFile.FullName, filePath, true);
+
+    foreach (var saveFile in saveFiles.Where(f => _file.Exists(f.FullName)))
+    {
+      _logger.LogDebug("Removing redundant save file: {path}", saveFile.FullName);
+      _file.Delete(saveFile.FullName);
+    }
+  }
+
+  private static DateTime ToStartOfDay(DateTime date) => new(date.Year, date.Month, date.Day);
+
+  private List<FileInfo> GetManageableFiles()
+  {
+    var filteredFiles = new List<string>();
+
+    // ReSharper disable once LoopCanBeConvertedToQuery
+    foreach (var saveFile in _directory.GetFiles(_destPath, "*.zip", SearchOption.TopDirectoryOnly))
+    {
+      var fileName = saveFile.Replace("\\", "/").Split('/').Last();
+
+      if (!_managedSaveRx.IsMatch(fileName))
+        continue;
+
+      filteredFiles.Add(saveFile);
+    }
+
+    var startOfDay = ToStartOfDay(DateTime.Now);
+
+    return filteredFiles
+      .Select(filteredSaveFile => new FileInfo(filteredSaveFile))
+      .Where(fileInfo => fileInfo.LastWriteTime < startOfDay)
+      .ToList();
+  }
+
+  private void EnsureManagedSavesDir(string path)
+  {
+    if (_directory.Exists(path))
+      return;
+
+    _logger.LogInformation("Creating managed saves directory: {path}", path);
+    _directory.CreateDirectory(path);
+
+    if (!_directory.Exists(path))
+      throw new Exception($"Unable to create directory: {path}");
   }
 
   private void SetConfiguration(JobOptions jobConfig)
@@ -93,6 +191,11 @@ class BackupSatisfactory : IRunnableJob
     _fileName = jobConfig.Config.GetStringValue("BackupFileName");
     _tickIntervalMin = jobConfig.Config.GetIntValue("TickIntervalMin", 10);
     _overwriteExisting = jobConfig.Config.GetBoolValue("OverwriteExisting", false);
+    _manageSaves = jobConfig.Config.GetBoolValue("ManageSaves", false);
+
+    var managedSaveRx = jobConfig.Config.GetStringValue("ManageSaveRx");
+    if (!string.IsNullOrWhiteSpace(managedSaveRx))
+      _managedSaveRx = new Regex(managedSaveRx, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     if (string.IsNullOrWhiteSpace(_sourcePath))
       throw new Exception("Source: must have a value");
