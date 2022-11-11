@@ -5,7 +5,7 @@ class RunningJobOptions
   public string ConfigKey { get; set; }
   public string Host { get; set; }
   public JobConfig Config { get; set; } = new();
-  public DateTime JobStartTime { get; set; }
+  public DateTimeOffset JobStartTime { get; set; }
   public RunningJobState State { get; set; }
 
   public RunningJobOptions(string configKey, string host)

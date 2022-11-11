@@ -23,22 +23,22 @@ class RunningJobState
   }
 
   public bool ContainsKey(string key) => _state.ContainsKey(key);
-
-  public DateTime GetDateTimeValue(string key)
+  
+  public DateTimeOffset GetDateTimeOffsetValue(string key)
   {
     if (!ContainsKey(key))
       throw new Exception($"Unable to find DateTime key: {key}");
 
     if (_state[key].Type.ToLower() != DbValueType.DateTime)
-      throw new Exception($"Config key '{key}' is not of type DateTime");
+      throw new Exception($"Config key '{key}' is not of type DateTimeOffset");
 
-    if (DateTime.TryParse(_state[key].Value, out var parsed))
+    if (DateTimeOffset.TryParse(_state[key].Value, out var parsed))
       return parsed;
 
-    throw new Exception($"Unable to parse '{_state[key].Value}' as DateTime");
+    throw new Exception($"Unable to parse '{_state[key].Value}' as DateTimeOffset");
   }
 
-  public void SetValue(string key, DateTime value)
+  public void SetValue(string key, DateTimeOffset value)
   {
     if (!_state.ContainsKey(key))
       _state[key] = new StateEntity
@@ -48,8 +48,8 @@ class RunningJobState
         Host = _host,
         Type = DbValueType.DateTime
       };
-
-    _state[key].Value = value.ToString("u");
+    
+    _state[key].Value = value.ToString("O");
   }
 
   public List<StateEntity> GetStateEntities() => _state.Keys.Select(key => _state[key]).ToList();

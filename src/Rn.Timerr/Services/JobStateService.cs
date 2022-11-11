@@ -17,7 +17,6 @@ class JobStateService : IJobStateService
   private readonly ILoggerAdapter<JobStateService> _logger;
   private readonly IStateRepo _stateRepo;
   private readonly RnTimerrConfig _config;
-  private readonly Dictionary<string, RunningJobState> _cache = new(StringComparer.InvariantCultureIgnoreCase);
 
   public JobStateService(ILoggerAdapter<JobStateService> logger,
     IStateRepo stateRepo,
@@ -30,18 +29,12 @@ class JobStateService : IJobStateService
 
   public async Task<RunningJobState> GetJobStateAsync(string configKey)
   {
-    if (_cache.ContainsKey(configKey))
-      return _cache[configKey];
-
     var jobState = await _stateRepo.GetAllStateAsync(configKey, _config.Host);
-    _cache[configKey] = new RunningJobState(configKey, _config.Host, jobState);
-    return _cache[configKey];
+    return new RunningJobState(configKey, _config.Host, jobState);
   }
 
   public async Task PersistStateAsync(RunningJobOptions options)
   {
-    _cache[options.ConfigKey] = options.State;
-
     var stateEntries = options.State.GetStateEntities();
     if (stateEntries.Count == 0)
       return;

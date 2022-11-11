@@ -42,10 +42,12 @@ class BackupSatisfactory : IRunnableJob
     if (!options.State.ContainsKey("NextRunTime"))
       return true;
 
-    var nextRunTime = options.State.GetDateTimeValue("NextRunTime");
+    var nextRunTime = options.State.GetDateTimeOffsetValue("NextRunTime");
+
     if (nextRunTime > options.JobStartTime)
       return false;
 
+    _logger.LogDebug("Current time {now} > {runTime} (Running Job)", options.JobStartTime, nextRunTime);
     return true;
   }
 
@@ -59,6 +61,7 @@ class BackupSatisfactory : IRunnableJob
     await Task.CompletedTask;
     return BackupGameFiles(options);
   }
+
 
   // Game backup methods
   private RunningJobResult BackupGameFiles(RunningJobOptions options)
@@ -82,7 +85,7 @@ class BackupSatisfactory : IRunnableJob
     ZipFile.CreateFromDirectory(_sourcePath, fileName, CompressionLevel.Optimal, true);
     _logger.LogInformation("Completed: {path} ({size})", fileName, new FileInfo(fileName).Length);
 
-    var nextRunTime = options.JobStartTime.AddMinutes(_tickIntervalMin);
+    var nextRunTime = DateTimeOffset.Now.AddMinutes(_tickIntervalMin);
     options.State.SetValue("NextRunTime", nextRunTime);
     _logger.LogDebug("Scheduled next tick for: {time}", nextRunTime);
 

@@ -2,7 +2,6 @@ using Rn.Timerr.Enums;
 using Rn.Timerr.Jobs;
 using Rn.Timerr.Models;
 using Rn.Timerr.Models.Config;
-using RnCore.Abstractions;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Services;
@@ -15,7 +14,6 @@ interface IJobRunnerService
 class JobRunnerService : IJobRunnerService
 {
   private readonly ILoggerAdapter<JobRunnerService> _logger;
-  private readonly IDateTimeAbstraction _dateTime;
   private readonly List<IRunnableJob> _jobs;
   private readonly IJobConfigService _jobConfigService;
   private readonly IJobStateService _jobStateService;
@@ -23,13 +21,11 @@ class JobRunnerService : IJobRunnerService
 
   public JobRunnerService(
     ILoggerAdapter<JobRunnerService> logger,
-    IDateTimeAbstraction dateTime,
     IEnumerable<IRunnableJob> runnableJobs,
     IJobConfigService jobConfigService,
     IJobStateService jobStateService,
     RnTimerrConfig config)
   {
-    _dateTime = dateTime;
     _jobConfigService = jobConfigService;
     _jobStateService = jobStateService;
     _config = config;
@@ -48,7 +44,7 @@ class JobRunnerService : IJobRunnerService
       {
         Config = await _jobConfigService.GetJobConfig(job.ConfigKey),
         State = await _jobStateService.GetJobStateAsync(job.ConfigKey),
-        JobStartTime = _dateTime.Now
+        JobStartTime = DateTimeOffset.Now
       };
 
       if (!job.CanRun(jobOptions))
