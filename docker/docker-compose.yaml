@@ -1,0 +1,17 @@
+version: '3.6'
+
+services:
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MARIADB_USER: rntimerr
+      MARIADB_PASSWORD: password
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: RnTimerr
+    
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+
+    ports:
+      - 3306:3306

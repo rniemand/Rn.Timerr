@@ -1,6 +1,5 @@
 using Rn.Timerr.Jobs;
 using Rn.Timerr.Models;
-using Rn.Timerr.Providers;
 using RnCore.Abstractions;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -16,29 +15,29 @@ interface IJobRunnerService
 class JobRunnerService : IJobRunnerService
 {
   private readonly IDateTimeAbstraction _dateTime;
-  private readonly IJobConfigProvider _jobConfigProvider;
   private readonly IJsonHelper _jsonHelper;
   private readonly IPathAbstraction _path;
   private readonly IFileAbstraction _file;
   private readonly List<IRunnableJob> _jobs;
+  private readonly IConfigService _configService;
 
   private readonly string _stateDir;
   private readonly Dictionary<string, Dictionary<string, object>> _jobStates = new();
 
   public JobRunnerService(
     IDateTimeAbstraction dateTime,
-    IJobConfigProvider jobConfigProvider,
     IJsonHelper jsonHelper,
     IPathAbstraction path,
     IFileAbstraction file,
     IDirectoryAbstraction directory,
-    IEnumerable<IRunnableJob> runnableJobs)
+    IEnumerable<IRunnableJob> runnableJobs,
+    IConfigService configService)
   {
     _dateTime = dateTime;
-    _jobConfigProvider = jobConfigProvider;
     _jsonHelper = jsonHelper;
     _path = path;
     _file = file;
+    _configService = configService;
     _jobs = runnableJobs.ToList();
 
     // Ensure that we have a state directory to work with
@@ -56,7 +55,7 @@ class JobRunnerService : IJobRunnerService
     {
       var jobOptions = new JobOptions
       {
-        Config = _jobConfigProvider.GetJobConfig(job.ConfigKey),
+        Config = await _configService.GetJobConfig(job.ConfigKey),
         JobStartTime = _dateTime.Now,
         State = GetJobState(job)
       };

@@ -1,23 +1,63 @@
-using Microsoft.Extensions.Configuration;
+using Rn.Timerr.Enums;
+using Rn.Timerr.Models.Entities;
 
 namespace Rn.Timerr.Models;
 
 class JobConfig
 {
-  private readonly IConfiguration _configuration = new ConfigurationManager();
+  private readonly Dictionary<string, ConfigEntity> _config = new(StringComparer.InvariantCultureIgnoreCase);
 
   public JobConfig() { }
 
-  public JobConfig(IConfiguration configuration)
+  public JobConfig(IReadOnlyCollection<ConfigEntity> config)
+    : this()
   {
-    _configuration = configuration;
+    foreach (var currentConfig in config.Where(c => c.Host == "*"))
+      _config[currentConfig.Key] = currentConfig;
+
+    foreach (var currentConfig in config.Where(c => c.Host != "*"))
+      _config[currentConfig.Key] = currentConfig;
   }
 
-  public bool HasStringValue(string key) => _configuration.GetValue<string>(key) is not null;
-  
-  public string GetStringValue(string key) => _configuration.GetValue<string>(key) ?? string.Empty;
+  public bool HasStringValue(string key)
+  {
+    if (!_config.ContainsKey(key))
+      return false;
 
-  public int GetIntValue(string key, int fallback) => _configuration.GetValue<int>(key, fallback);
+    return _config[key].Type.ToLower() == ConfigType.String;
+  }
 
-  public bool GetBoolValue(string key, bool fallback) => _configuration.GetValue<bool>(key, fallback);
+  public bool HasIntValue(string key)
+  {
+    if (!_config.ContainsKey(key))
+      return false;
+
+    return _config[key].Type.ToLower() == ConfigType.Int;
+  }
+
+  public bool HasBoolValue(string key)
+  {
+    if (!_config.ContainsKey(key))
+      return false;
+
+    return _config[key].Type.ToLower() == ConfigType.Boolean;
+  }
+
+  public string GetStringValue(string key) => !HasStringValue(key) ? string.Empty : _config[key].Value;
+
+  public int GetIntValue(string key, int fallback)
+  {
+    if (!HasIntValue(key))
+      return fallback;
+
+    return int.TryParse(_config[key].Value, out var parsed) ? parsed : fallback;
+  }
+
+  public bool GetBoolValue(string key, bool fallback)
+  {
+    if (!HasBoolValue(key))
+      return fallback;
+
+    return bool.TryParse(_config[key].Value, out var parsed) ? parsed : fallback;
+  }
 }

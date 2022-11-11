@@ -5,8 +5,8 @@ using RnCore.Abstractions;
 using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
-using Rn.Timerr.Providers;
 using Rn.Timerr.Helpers;
+using Rn.Timerr.Repo;
 
 namespace Rn.Timerr.Extensions;
 
@@ -26,9 +26,11 @@ static class ServiceCollectionExtensions
 
       // Services
       .AddSingleton<IJobRunnerService, JobRunnerService>()
-
-      // Providers
-      .AddSingleton<IJobConfigProvider, JobConfigProvider>()
+      .AddSingleton<IConfigService, ConfigService>()
+      
+      // Database
+      .AddSingleton<IConnectionFactory, ConnectionFactory>()
+      .AddSingleton<IConfigRepo, ConfigRepo>()
 
       // Helpers
       .AddSingleton<IJsonHelper, JsonHelper>()
