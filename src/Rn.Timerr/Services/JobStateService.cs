@@ -1,42 +1,39 @@
-using Microsoft.Extensions.Configuration;
 using Rn.Timerr.Extensions;
 using Rn.Timerr.Models;
+using Rn.Timerr.Models.Config;
 using Rn.Timerr.Repo;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Services;
 
-interface IStateService
+interface IJobStateService
 {
   Task<RunningJobState> GetJobStateAsync(string category);
-  Task PersistStateAsync(JobOptions options);
+  Task PersistStateAsync(RunningJobOptions options);
 }
 
-class StateService : IStateService
+class JobStateService : IJobStateService
 {
-  private readonly ILoggerAdapter<StateService> _logger;
+  private readonly ILoggerAdapter<JobStateService> _logger;
   private readonly IStateRepo _stateRepo;
-  private readonly string _host;
+  private readonly RnTimerrConfig _config;
 
-  public StateService(ILoggerAdapter<StateService> logger,
+  public JobStateService(ILoggerAdapter<JobStateService> logger,
     IStateRepo stateRepo,
-    IConfiguration configuration)
+    RnTimerrConfig config)
   {
     _logger = logger;
     _stateRepo = stateRepo;
-
-    _host = configuration.GetValue<string>("RnTimerr:Host") ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(_host))
-      throw new Exception("You need to define: 'RnTimerr:Host'");
+    _config = config;
   }
 
   public async Task<RunningJobState> GetJobStateAsync(string category)
   {
-    var jobState = await _stateRepo.GetAllStateAsync(category, _host);
-    return new RunningJobState(category, _host, jobState);
+    var jobState = await _stateRepo.GetAllStateAsync(category, _config.Host);
+    return new RunningJobState(category, _config.Host, jobState);
   }
 
-  public async Task PersistStateAsync(JobOptions options)
+  public async Task PersistStateAsync(RunningJobOptions options)
   {
     var stateEntries = options.State.GetStateEntities();
     if (stateEntries.Count == 0)

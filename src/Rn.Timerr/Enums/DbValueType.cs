@@ -1,6 +1,6 @@
 namespace Rn.Timerr.Enums;
 
-class ConfigType
+class DbValueType
 {
   public const string String = "string";
   public const string Int = "int";

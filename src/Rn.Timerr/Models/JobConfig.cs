@@ -24,7 +24,7 @@ class JobConfig
     if (!_config.ContainsKey(key))
       return false;
 
-    return _config[key].Type.ToLower() == ConfigType.String;
+    return _config[key].Type.ToLower() == DbValueType.String;
   }
 
   public bool HasIntValue(string key)
@@ -32,7 +32,7 @@ class JobConfig
     if (!_config.ContainsKey(key))
       return false;
 
-    return _config[key].Type.ToLower() == ConfigType.Int;
+    return _config[key].Type.ToLower() == DbValueType.Int;
   }
 
   public bool HasBoolValue(string key)
@@ -40,7 +40,7 @@ class JobConfig
     if (!_config.ContainsKey(key))
       return false;
 
-    return _config[key].Type.ToLower() == ConfigType.Boolean;
+    return _config[key].Type.ToLower() == DbValueType.Boolean;
   }
 
   public string GetStringValue(string key) => !HasStringValue(key) ? string.Empty : _config[key].Value;

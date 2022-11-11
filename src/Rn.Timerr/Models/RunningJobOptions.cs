@@ -1,6 +1,6 @@
 namespace Rn.Timerr.Models;
 
-class JobOptions
+class RunningJobOptions
 {
   public string ConfigKey { get; set; }
   public string Host { get; set; }
@@ -8,7 +8,7 @@ class JobOptions
   public DateTime JobStartTime { get; set; }
   public RunningJobState State { get; set; }
 
-  public JobOptions(string configKey, string host)
+  public RunningJobOptions(string configKey, string host)
   {
     ConfigKey = configKey;
     Host = host;

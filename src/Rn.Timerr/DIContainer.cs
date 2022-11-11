@@ -21,7 +21,7 @@ internal static class DIContainer
 
     services
       .AddSingleton<IConfiguration>(config)
-      .AddRnTimerr()
+      .AddRnTimerr(config)
       .AddLogging(loggingBuilder =>
       {
         loggingBuilder.ClearProviders();

@@ -37,7 +37,7 @@ class BackupSatisfactory : IRunnableJob
   }
 
   // Interface methods
-  public bool CanRun(JobOptions options)
+  public bool CanRun(RunningJobOptions options)
   {
     if (!options.State.ContainsKey("NextRunTime"))
       return true;
@@ -49,19 +49,19 @@ class BackupSatisfactory : IRunnableJob
     return true;
   }
 
-  public async Task<JobOutcome> RunAsync(JobOptions options)
+  public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     SetConfiguration(options);
 
     if (!ValidateDestinations())
-      return new JobOutcome(JobState.Failed);
+      return new RunningJobResult(JobOutcome.Failed);
 
     await Task.CompletedTask;
     return BackupGameFiles(options);
   }
 
   // Game backup methods
-  private JobOutcome BackupGameFiles(JobOptions options)
+  private RunningJobResult BackupGameFiles(RunningJobOptions options)
   {
     ManageGameSaves();
 
@@ -69,7 +69,7 @@ class BackupSatisfactory : IRunnableJob
     if (_file.Exists(fileName) && !_overwriteExisting)
     {
       _logger.LogInformation("File {path} already exists, skipping backup", fileName);
-      return new JobOutcome(JobState.Succeeded);
+      return new RunningJobResult(JobOutcome.Succeeded);
     }
 
     if (_file.Exists(fileName))
@@ -86,7 +86,7 @@ class BackupSatisfactory : IRunnableJob
     options.State.SetValue("NextRunTime", nextRunTime);
     _logger.LogDebug("Scheduled next tick for: {time}", nextRunTime);
 
-    return new JobOutcome(JobState.Succeeded);
+    return new RunningJobResult(JobOutcome.Succeeded);
   }
 
   private void ManageGameSaves()
@@ -175,25 +175,25 @@ class BackupSatisfactory : IRunnableJob
       throw new Exception($"Unable to create directory: {path}");
   }
 
-  private void SetConfiguration(JobOptions jobConfig)
+  private void SetConfiguration(RunningJobOptions runningJobConfig)
   {
-    if (!jobConfig.Config.HasStringValue("Source"))
+    if (!runningJobConfig.Config.HasStringValue("Source"))
       throw new Exception("Missing configuration for: Source");
 
-    if (!jobConfig.Config.HasStringValue("Destination"))
+    if (!runningJobConfig.Config.HasStringValue("Destination"))
       throw new Exception("Missing configuration for: Destination");
 
-    if (!jobConfig.Config.HasStringValue("BackupFileName"))
+    if (!runningJobConfig.Config.HasStringValue("BackupFileName"))
       throw new Exception("Missing configuration for: BackupFileName");
 
-    _sourcePath = jobConfig.Config.GetStringValue("Source");
-    _destPath = jobConfig.Config.GetStringValue("Destination");
-    _fileName = jobConfig.Config.GetStringValue("BackupFileName");
-    _tickIntervalMin = jobConfig.Config.GetIntValue("TickIntervalMin", 10);
-    _overwriteExisting = jobConfig.Config.GetBoolValue("OverwriteExisting", false);
-    _manageSaves = jobConfig.Config.GetBoolValue("ManageSaves", false);
+    _sourcePath = runningJobConfig.Config.GetStringValue("Source");
+    _destPath = runningJobConfig.Config.GetStringValue("Destination");
+    _fileName = runningJobConfig.Config.GetStringValue("BackupFileName");
+    _tickIntervalMin = runningJobConfig.Config.GetIntValue("TickIntervalMin", 10);
+    _overwriteExisting = runningJobConfig.Config.GetBoolValue("OverwriteExisting", false);
+    _manageSaves = runningJobConfig.Config.GetBoolValue("ManageSaves", false);
 
-    var managedSaveRx = jobConfig.Config.GetStringValue("ManageSaveRx");
+    var managedSaveRx = runningJobConfig.Config.GetStringValue("ManageSaveRx");
     if (!string.IsNullOrWhiteSpace(managedSaveRx))
       _managedSaveRx = new Regex(managedSaveRx, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -230,11 +230,11 @@ class BackupSatisfactory : IRunnableJob
     return true;
   }
 
-  private string GenerateFileName(JobOptions jobConfig) => _fileName
-    .Replace("{yyyy}", jobConfig.JobStartTime.Year.ToString("D"))
-    .Replace("{mm}", jobConfig.JobStartTime.Month.ToString("D").PadLeft(2, '0'))
-    .Replace("{dd}", jobConfig.JobStartTime.Day.ToString("D").PadLeft(2, '0'))
-    .Replace("{hh}", jobConfig.JobStartTime.Hour.ToString("D").PadLeft(2, '0'))
-    .Replace("{mm}", jobConfig.JobStartTime.Minute.ToString("D").PadLeft(2, '0'))
-    .Replace("{ss}", jobConfig.JobStartTime.Second.ToString("D").PadLeft(2, '0'));
+  private string GenerateFileName(RunningJobOptions runningJobConfig) => _fileName
+    .Replace("{yyyy}", runningJobConfig.JobStartTime.Year.ToString("D"))
+    .Replace("{mm}", runningJobConfig.JobStartTime.Month.ToString("D").PadLeft(2, '0'))
+    .Replace("{dd}", runningJobConfig.JobStartTime.Day.ToString("D").PadLeft(2, '0'))
+    .Replace("{hh}", runningJobConfig.JobStartTime.Hour.ToString("D").PadLeft(2, '0'))
+    .Replace("{mm}", runningJobConfig.JobStartTime.Minute.ToString("D").PadLeft(2, '0'))
+    .Replace("{ss}", runningJobConfig.JobStartTime.Second.ToString("D").PadLeft(2, '0'));
 }

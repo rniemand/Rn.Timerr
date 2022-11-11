@@ -1,7 +1,9 @@
-using Microsoft.Extensions.Configuration;
+using Rn.Timerr.Enums;
 using Rn.Timerr.Jobs;
 using Rn.Timerr.Models;
+using Rn.Timerr.Models.Config;
 using RnCore.Abstractions;
+using RnCore.Logging;
 
 namespace Rn.Timerr.Services;
 
@@ -12,28 +14,27 @@ interface IJobRunnerService
 
 class JobRunnerService : IJobRunnerService
 {
+  private readonly ILoggerAdapter<JobRunnerService> _logger;
   private readonly IDateTimeAbstraction _dateTime;
   private readonly List<IRunnableJob> _jobs;
-  private readonly IConfigService _configService;
-  private readonly IStateService _stateService;
-  private readonly string _host;
+  private readonly IJobConfigService _jobConfigService;
+  private readonly IJobStateService _jobStateService;
+  private readonly RnTimerrConfig _config;
 
   public JobRunnerService(
+    ILoggerAdapter<JobRunnerService> logger,
     IDateTimeAbstraction dateTime,
     IEnumerable<IRunnableJob> runnableJobs,
-    IConfigService configService,
-    IStateService stateService,
-    IConfiguration configuration)
+    IJobConfigService jobConfigService,
+    IJobStateService jobStateService,
+    RnTimerrConfig config)
   {
     _dateTime = dateTime;
-    _configService = configService;
-    _stateService = stateService;
+    _jobConfigService = jobConfigService;
+    _jobStateService = jobStateService;
+    _config = config;
+    _logger = logger;
     _jobs = runnableJobs.ToList();
-
-    // TODO: Add host info provider
-    _host = configuration.GetValue<string>("RnTimerr:Host") ?? string.Empty;
-    if (string.IsNullOrWhiteSpace(_host))
-      throw new Exception("You need to define: 'RnTimerr:Host'");
   }
 
   public async Task RunJobsAsync()
@@ -43,18 +44,26 @@ class JobRunnerService : IJobRunnerService
 
     foreach (var job in _jobs)
     {
-      var jobOptions = new JobOptions(job.ConfigKey, _host)
+      var jobOptions = new RunningJobOptions(job.ConfigKey, _config.Host)
       {
-        Config = await _configService.GetJobConfig(job.ConfigKey),
-        State = await _stateService.GetJobStateAsync(job.ConfigKey),
+        Config = await _jobConfigService.GetJobConfig(job.ConfigKey),
+        State = await _jobStateService.GetJobStateAsync(job.ConfigKey),
         JobStartTime = _dateTime.Now
       };
 
       if (!job.CanRun(jobOptions))
         continue;
 
-      await job.RunAsync(jobOptions);
-      await _stateService.PersistStateAsync(jobOptions);
+      _logger.LogDebug("Running Job: {name}", job.Name);
+      var jobResult = await job.RunAsync(jobOptions);
+
+      if (jobResult.Outcome != JobOutcome.Succeeded)
+      {
+        _logger.LogWarning("Job {name} did not complete successfully!", job.Name);
+        return;
+      }
+
+      await _jobStateService.PersistStateAsync(jobOptions);
     }
   }
 }

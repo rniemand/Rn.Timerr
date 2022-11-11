@@ -5,19 +5,21 @@ using RnCore.Abstractions;
 using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
-using Rn.Timerr.Helpers;
 using Rn.Timerr.Repo;
+using Microsoft.Extensions.Configuration;
+using Rn.Timerr.Models.Config;
 
 namespace Rn.Timerr.Extensions;
 
 static class ServiceCollectionExtensions
 {
-  public static IServiceCollection AddRnTimerr(this IServiceCollection services)
+  public static IServiceCollection AddRnTimerr(this IServiceCollection services, IConfiguration configuration)
   {
     // Logging
     services.TryAddSingleton(typeof(ILoggerAdapter<>), typeof(LoggerAdapter<>));
 
     return services
+      .AddSingleton(GetRnTimerrConfig(configuration))
       // Abstractions
       .AddSingleton<IDirectoryAbstraction, DirectoryAbstraction>()
       .AddSingleton<IFileAbstraction, FileAbstraction>()
@@ -26,16 +28,13 @@ static class ServiceCollectionExtensions
 
       // Services
       .AddSingleton<IJobRunnerService, JobRunnerService>()
-      .AddSingleton<IConfigService, ConfigService>()
-      .AddSingleton<IStateService, StateService>()
+      .AddSingleton<IJobConfigService, JobConfigService>()
+      .AddSingleton<IJobStateService, JobStateService>()
       
       // Database
       .AddSingleton<IConnectionFactory, ConnectionFactory>()
       .AddSingleton<IConfigRepo, ConfigRepo>()
       .AddSingleton<IStateRepo, StateRepo>()
-
-      // Helpers
-      .AddSingleton<IJsonHelper, JsonHelper>()
       
       // Register runnable jobs
       .RegisterImplementations(Assembly.GetExecutingAssembly(), typeof(IRunnableJob));
@@ -55,5 +54,16 @@ static class ServiceCollectionExtensions
       me.AddSingleton(targetType, implType);
 
     return me;
+  }
+
+  private static RnTimerrConfig GetRnTimerrConfig(IConfiguration config)
+  {
+    var boundConfig = new RnTimerrConfig();
+    var section = config.GetSection("RnTimerr");
+
+    if (section.Exists())
+      section.Bind(boundConfig);
+
+    return boundConfig;
   }
 }

@@ -29,7 +29,7 @@ class RunningJobState
     if (!ContainsKey(key))
       throw new Exception($"Unable to find DateTime key: {key}");
 
-    if (_state[key].Type.ToLower() != ConfigType.DateTime)
+    if (_state[key].Type.ToLower() != DbValueType.DateTime)
       throw new Exception($"Config key '{key}' is not of type DateTime");
 
     if (DateTime.TryParse(_state[key].Value, out var parsed))
@@ -46,7 +46,7 @@ class RunningJobState
         Category = _category,
         Key = key,
         Host = _host,
-        Type = ConfigType.DateTime
+        Type = DbValueType.DateTime
       };
 
     _state[key].Value = value.ToString("u");
