@@ -1,7 +1,6 @@
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Rn.Timerr.Enums;
-using Rn.Timerr.Extensions;
 using Rn.Timerr.Models;
 using RnCore.Abstractions;
 using RnCore.Logging;
@@ -38,35 +37,35 @@ class BackupSatisfactory : IRunnableJob
   }
 
   // Interface methods
-  public bool CanRun(JobOptions jobOptions)
+  public bool CanRun(JobOptions options)
   {
-    if (!jobOptions.State.HasStateKey("NextRunTime"))
+    if (!options.State.ContainsKey("NextRunTime"))
       return true;
 
-    var nextRunTime = jobOptions.State.GetDateTimeValue("NextRunTime");
-    if (nextRunTime > jobOptions.JobStartTime)
+    var nextRunTime = options.State.GetDateTimeValue("NextRunTime");
+    if (nextRunTime > options.JobStartTime)
       return false;
 
     return true;
   }
 
-  public async Task<JobOutcome> RunAsync(JobOptions jobOptions)
+  public async Task<JobOutcome> RunAsync(JobOptions options)
   {
-    SetConfiguration(jobOptions);
+    SetConfiguration(options);
 
     if (!ValidateDestinations())
       return new JobOutcome(JobState.Failed);
 
     await Task.CompletedTask;
-    return BackupGameFiles(jobOptions);
+    return BackupGameFiles(options);
   }
 
   // Game backup methods
-  private JobOutcome BackupGameFiles(JobOptions jobOptions)
+  private JobOutcome BackupGameFiles(JobOptions options)
   {
     ManageGameSaves();
 
-    var fileName = _path.Combine(_destPath, GenerateFileName(jobOptions));
+    var fileName = _path.Combine(_destPath, GenerateFileName(options));
     if (_file.Exists(fileName) && !_overwriteExisting)
     {
       _logger.LogInformation("File {path} already exists, skipping backup", fileName);
@@ -83,8 +82,9 @@ class BackupSatisfactory : IRunnableJob
     ZipFile.CreateFromDirectory(_sourcePath, fileName, CompressionLevel.Optimal, true);
     _logger.LogInformation("Completed: {path} ({size})", fileName, new FileInfo(fileName).Length);
 
-    jobOptions.State["NextRunTime"] = jobOptions.JobStartTime.AddMinutes(_tickIntervalMin);
-    _logger.LogDebug("Scheduled next tick for: {time}", jobOptions.State["NextRunTime"]);
+    var nextRunTime = options.JobStartTime.AddMinutes(_tickIntervalMin);
+    options.State.SetValue("NextRunTime", nextRunTime);
+    _logger.LogDebug("Scheduled next tick for: {time}", nextRunTime);
 
     return new JobOutcome(JobState.Succeeded);
   }

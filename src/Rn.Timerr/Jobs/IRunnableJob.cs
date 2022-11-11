@@ -7,7 +7,7 @@ interface IRunnableJob
   string Name { get; }
   string ConfigKey { get; }
 
-  bool CanRun(JobOptions jobOptions);
+  bool CanRun(JobOptions options);
 
-  Task<JobOutcome> RunAsync(JobOptions jobOptions);
+  Task<JobOutcome> RunAsync(JobOptions options);
 }

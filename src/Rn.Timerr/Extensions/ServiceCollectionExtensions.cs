@@ -27,10 +27,12 @@ static class ServiceCollectionExtensions
       // Services
       .AddSingleton<IJobRunnerService, JobRunnerService>()
       .AddSingleton<IConfigService, ConfigService>()
+      .AddSingleton<IStateService, StateService>()
       
       // Database
       .AddSingleton<IConnectionFactory, ConnectionFactory>()
       .AddSingleton<IConfigRepo, ConfigRepo>()
+      .AddSingleton<IStateRepo, StateRepo>()
 
       // Helpers
       .AddSingleton<IJsonHelper, JsonHelper>()
