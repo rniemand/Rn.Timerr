@@ -23,3 +23,16 @@ CREATE TABLE `State` (
 )
 COLLATE='utf8mb3_general_ci'
 ENGINE=InnoDB;
+
+CREATE TABLE `Jobs` (
+	`JobID` INT(11) NOT NULL AUTO_INCREMENT,
+	`Enabled` BIT(1) NOT NULL DEFAULT b'1',
+	`JobName` VARCHAR(128) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`NextRun` DATETIME NOT NULL DEFAULT utc_timestamp(6),
+	`LastRun` DATETIME NOT NULL DEFAULT utc_timestamp(6),
+	PRIMARY KEY (`JobID`) USING BTREE,
+	INDEX `Enabled` (`Enabled`) USING BTREE
+)
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB;
+

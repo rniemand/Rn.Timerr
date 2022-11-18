@@ -8,3 +8,9 @@ VALUES
 	('BackupSatisfactory',  'OverwriteExisting', 'Dev',  'bool',    'true'),
 	('BackupSatisfactory',  'ManageSaves',       'Dev',  'bool',    'true'),
 	('BackupSatisfactory',  'TickIntervalMin',   'Dev',  'int',     '1');
+
+INSERT INTO `Jobs`
+	(`JobName`, `Enabled`)
+VALUES
+	('BackupSatisfactory', 1);
+	

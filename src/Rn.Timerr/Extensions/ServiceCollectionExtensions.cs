@@ -35,6 +35,7 @@ static class ServiceCollectionExtensions
       .AddSingleton<IConnectionFactory, ConnectionFactory>()
       .AddSingleton<IConfigRepo, ConfigRepo>()
       .AddSingleton<IStateRepo, StateRepo>()
+      .AddSingleton<IJobsRepo, JobsRepo>()
       
       // Register runnable jobs
       .RegisterImplementations(Assembly.GetExecutingAssembly(), typeof(IRunnableJob));
