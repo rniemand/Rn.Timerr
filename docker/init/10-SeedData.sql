@@ -12,5 +12,5 @@ VALUES
 INSERT INTO `Jobs`
 	(`JobName`, `Enabled`)
 VALUES
-	('BackupSatisfactory', 1);
+	('BackupSatisfactory', 0);
 	
