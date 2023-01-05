@@ -83,7 +83,6 @@ class JobRunnerService : IJobRunnerService
   // Internal methods
   private async Task RefreshEnabledJobs()
   {
-    _logger.LogTrace("Refreshing enabled jobs");
     _enabledJobs.Clear();
     _enabledJobs.AddRange(await _jobsRepo.GetJobsAsync(_config.Host));
   }
