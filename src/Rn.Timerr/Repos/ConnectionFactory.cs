@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 
-namespace Rn.Timerr.Repo;
+namespace Rn.Timerr.Repos;
 
 public interface IConnectionFactory
 {
