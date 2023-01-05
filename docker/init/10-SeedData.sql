@@ -1,3 +1,6 @@
+-- ===============================================================================================================================
+-- BackupSatisfactory
+-- ===============================================================================================================================
 INSERT INTO `Config`
 	(`Category`,`Key`,`Host`,`Type`,`Value`)
 VALUES
@@ -9,8 +12,19 @@ VALUES
 	('BackupSatisfactory',  'ManageSaves',       'Dev',  'bool',    'true'),
 	('BackupSatisfactory',  'TickIntervalMin',   'Dev',  'int',     '1');
 
-INSERT INTO `Jobs`
-	(`JobName`, `Enabled`)
+INSERT INTO `Jobs` (`JobName`, `Enabled`) VALUES ('BackupSatisfactory', 0);
+
+-- ===============================================================================================================================
+-- BackupSonarQube
+-- ===============================================================================================================================
+INSERT INTO `Config`
+	(`Category`,`Key`,`Host`,`Type`,`Value`)
 VALUES
-	('BackupSatisfactory', 0);
-	
+	('BackupSonarQube', 'SqlConnection', 'Dev', 'string',  'Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;'),
+	('BackupSonarQube', 'ssh.host',      'Dev', 'string',  '127.0.0.1'),
+	('BackupSonarQube', 'ssh.port',      'Dev', 'int',     '22'),
+	('BackupSonarQube', 'ssh.user',      'Dev', 'string',  'username'),
+	('BackupSonarQube', 'ssh.pass',      'Dev', 'string',  'password');
+
+INSERT INTO `Jobs` (`JobName`, `Enabled`) VALUES ('BackupSonarQube', 1);
+
