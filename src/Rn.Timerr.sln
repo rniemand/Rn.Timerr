@@ -9,7 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lib", "Lib", "{EBABA71E-C32
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0EBDDA74-52D2-4959-8AE6-6F81E01ED2FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rn.Timerr.Tests", "..\tests\Rn.Timerr.Tests\Rn.Timerr.Tests.csproj", "{DE101ACC-06BE-49FF-BB56-38AD0F3BA43E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rn.Timerr.Tests", "..\tests\Rn.Timerr.Tests\Rn.Timerr.Tests.csproj", "{DE101ACC-06BE-49FF-BB56-38AD0F3BA43E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevConsole", "DevConsole\DevConsole.csproj", "{D245E67B-FA81-4CFD-8F42-520B8D3E0352}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +27,10 @@ Global
 		{DE101ACC-06BE-49FF-BB56-38AD0F3BA43E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE101ACC-06BE-49FF-BB56-38AD0F3BA43E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE101ACC-06BE-49FF-BB56-38AD0F3BA43E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D245E67B-FA81-4CFD-8F42-520B8D3E0352}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D245E67B-FA81-4CFD-8F42-520B8D3E0352}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D245E67B-FA81-4CFD-8F42-520B8D3E0352}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D245E67B-FA81-4CFD-8F42-520B8D3E0352}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
