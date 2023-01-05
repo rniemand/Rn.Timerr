@@ -36,22 +36,34 @@ internal class BackupSonarQube : IRunnableJob
 
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    await CreateDbBackupAsync(options);
-    ProcessDbBackup(options);
+    var config = MapConfiguration(options);
+    var jobOutcome = new RunningJobResult(JobOutcome.Failed);
+
+    if (!config.IsValid())
+      return jobOutcome.WithError("Missing required configuration");
+
+    await CreateDbBackupAsync(config);
+    ProcessDbBackup(config);
     ScheduleNextRunTime(options);
 
-    return new RunningJobResult(JobOutcome.Succeeded);
+    return jobOutcome.AsSucceeded();
   }
 
 
   // Internal methods
-  private async Task CreateDbBackupAsync(RunningJobOptions options)
-  {
-    var sqlConnectionString = options.Config.GetStringValue("SqlConnection");
-    if (string.IsNullOrWhiteSpace(sqlConnectionString))
-      throw new Exception("Unable to find SQL connection string");
+  private BackupSonarQubeConfig MapConfiguration(RunningJobOptions options) =>
+    new()
+    {
+      SqlConnectionString = options.Config.GetStringValue("SqlConnection"),
+      SshHost = options.Config.GetStringValue("ssh.host"),
+      SshPort = options.Config.GetIntValue("ssh.port", 22),
+      SshUser = options.Config.GetStringValue("ssh.user"),
+      SshPass = options.Config.GetStringValue("ssh.pass")
+    };
 
-    var sqlConnection = new SqlConnection(sqlConnectionString);
+  private async Task CreateDbBackupAsync(BackupSonarQubeConfig config)
+  {
+    var sqlConnection = new SqlConnection(config.SqlConnectionString);
     sqlConnection.Open();
 
     const string backupQuery = @"BACKUP DATABASE SonarQube 
@@ -64,9 +76,9 @@ internal class BackupSonarQube : IRunnableJob
     _logger.LogInformation("   ... backup completed");
   }
 
-  private void ProcessDbBackup(RunningJobOptions options)
+  private void ProcessDbBackup(BackupSonarQubeConfig config)
   {
-    var client = GetSshClient(options);
+    var client = GetSshClient(config);
 
     RunSshCommand(client, "chmod 0777 /mnt/user/appdata/sql-server/data/SonarQube.bak");
     RunSshCommand(client, "mv /mnt/user/appdata/sql-server/data/SonarQube.bak /mnt/user/Backups/db-mssql/SonarQube.bak");
@@ -79,18 +91,13 @@ internal class BackupSonarQube : IRunnableJob
   {
     var nextRunTime = DateTimeOffset.Now.AddHours(23);
     options.State.SetValue("NextRunTime", nextRunTime);
-    _logger.LogDebug("Scheduled next tick for: {time}", nextRunTime);
+    _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
 
-  private static SshClient GetSshClient(RunningJobOptions options)
+  private static SshClient GetSshClient(BackupSonarQubeConfig config)
   {
-    var host = options.Config.GetStringValue("ssh.host");
-    var port = options.Config.GetIntValue("ssh.port", 22);
-    var user = options.Config.GetStringValue("ssh.user");
-    var pass = options.Config.GetStringValue("ssh.pass");
-
-    var creds = new PasswordAuthenticationMethod(user, pass);
-    var sshClient = new SshClient(new ConnectionInfo(host, port, user, creds));
+    var credentials = new PasswordAuthenticationMethod(config.SshUser, config.SshPass);
+    var sshClient = new SshClient(new ConnectionInfo(config.SshHost, config.SshPort, config.SshUser, credentials));
     sshClient.Connect();
     return sshClient;
   }
@@ -106,5 +113,31 @@ internal class BackupSonarQube : IRunnableJob
 
     _logger.LogError("Error running command '{cmd}': {error}", commandOutput, commandOutput.Error);
     throw new Exception($"ssh command error: {commandOutput.Error}");
+  }
+}
+
+class BackupSonarQubeConfig
+{
+  public string SqlConnectionString { get; set; } = string.Empty;
+  public string SshHost { get; set; } = string.Empty;
+  public int SshPort { get; set; } = 22;
+  public string SshUser { get; set; } = string.Empty;
+  public string SshPass { get; set; } = string.Empty;
+
+  public bool IsValid()
+  {
+    if (string.IsNullOrWhiteSpace(SqlConnectionString))
+      return false;
+
+    if (string.IsNullOrWhiteSpace(SshHost))
+      return false;
+
+    if (string.IsNullOrWhiteSpace(SshUser))
+      return false;
+
+    if (string.IsNullOrWhiteSpace(SshPass))
+      return false;
+
+    return true;
   }
 }

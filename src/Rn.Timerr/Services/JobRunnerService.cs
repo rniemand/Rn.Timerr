@@ -66,12 +66,12 @@ class JobRunnerService : IJobRunnerService
       if (!job.CanRun(jobOptions))
         continue;
 
-      _logger.LogDebug("Running Job: {name}", job.Name);
+      _logger.LogInformation("Running Job: {name}", job.Name);
       var jobResult = await job.RunAsync(jobOptions);
 
       if (jobResult.Outcome != JobOutcome.Succeeded)
       {
-        _logger.LogWarning("Job {name} did not complete successfully!", job.Name);
+        _logger.LogWarning("Job {name} failed: {reason}", job.Name, jobResult.Error);
         return;
       }
 
