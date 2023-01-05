@@ -1,6 +1,4 @@
 using System.Data.SqlClient;
-using Dapper;
-using Microsoft.Extensions.Options;
 using Renci.SshNet;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Models;
