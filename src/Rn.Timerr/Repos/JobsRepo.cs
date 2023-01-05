@@ -5,7 +5,7 @@ namespace Rn.Timerr.Repos;
 
 interface IJobsRepo
 {
-  Task<List<JobEntity>> GetJobsAsync();
+  Task<List<JobEntity>> GetJobsAsync(string host);
 }
 
 class JobsRepo : IJobsRepo
@@ -20,9 +20,13 @@ class JobsRepo : IJobsRepo
 
 
   // Interface methods
-  public async Task<List<JobEntity>> GetJobsAsync()
+  public async Task<List<JobEntity>> GetJobsAsync(string host)
   {
-    const string query = @$"SELECT * FROM `{TableName}` WHERE `Enabled` = 1";
+    var query = @$"SELECT *
+    FROM `{TableName}`
+    WHERE `Enabled` = 1
+      AND `Host` = '{host}'";
+
     await using var conn = _connectionFactory.GetConnection();
     return (await conn.QueryAsync<JobEntity>(query)).ToList();
   }

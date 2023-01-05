@@ -1,3 +1,4 @@
 - [Configuration](./configuration/README.md)
 - [Development](./development.md)
+- [Docker](./docker.md)
 - [Interfaces](./interfaces/README.md)

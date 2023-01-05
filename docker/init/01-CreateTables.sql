@@ -27,12 +27,13 @@ ENGINE=InnoDB;
 CREATE TABLE `Jobs` (
 	`JobID` INT(11) NOT NULL AUTO_INCREMENT,
 	`Enabled` BIT(1) NOT NULL DEFAULT b'1',
+	`Host` VARCHAR(32) NOT NULL DEFAULT 'utc_timestamp(6)' COLLATE 'utf8mb4_general_ci',
 	`JobName` VARCHAR(128) NOT NULL COLLATE 'utf8mb4_general_ci',
 	`NextRun` DATETIME NOT NULL DEFAULT utc_timestamp(6),
 	`LastRun` DATETIME NOT NULL DEFAULT utc_timestamp(6),
 	PRIMARY KEY (`JobID`) USING BTREE,
-	INDEX `Enabled` (`Enabled`) USING BTREE
+	INDEX `Enabled` (`Enabled`) USING BTREE,
+	INDEX `Host` (`Host`) USING BTREE
 )
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB;
-

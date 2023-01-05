@@ -12,7 +12,7 @@ VALUES
 	('BackupSatisfactory',  'ManageSaves',       'Dev',  'bool',    'true'),
 	('BackupSatisfactory',  'TickIntervalMin',   'Dev',  'int',     '1');
 
-INSERT INTO `Jobs` (`JobName`, `Enabled`) VALUES ('BackupSatisfactory', 0);
+INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupSatisfactory', 'Dev', 0);
 
 -- ===============================================================================================================================
 -- BackupSonarQube
@@ -26,5 +26,5 @@ VALUES
 	('BackupSonarQube', 'ssh.user',      'Dev', 'string',  'username'),
 	('BackupSonarQube', 'ssh.pass',      'Dev', 'string',  'password');
 
-INSERT INTO `Jobs` (`JobName`, `Enabled`) VALUES ('BackupSonarQube', 1);
+INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupSonarQube', 'Dev', 1);
 

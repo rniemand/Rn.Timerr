@@ -52,7 +52,7 @@ class JobRunnerService : IJobRunnerService
     foreach (var job in _jobs)
     {
       // Skip over any disabled jobs
-      if(!_enabledJobs.Any(x => x.JobName.IgnoreCaseEquals(job.ConfigKey)))
+      if (!_enabledJobs.Any(x => x.JobName.IgnoreCaseEquals(job.ConfigKey)))
         continue;
 
       // Build up the job configuration
@@ -85,6 +85,6 @@ class JobRunnerService : IJobRunnerService
   {
     _logger.LogTrace("Refreshing enabled jobs");
     _enabledJobs.Clear();
-    _enabledJobs.AddRange(await _jobsRepo.GetJobsAsync());
+    _enabledJobs.AddRange(await _jobsRepo.GetJobsAsync(_config.Host));
   }
 }
