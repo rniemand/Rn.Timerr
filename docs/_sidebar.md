@@ -1,1 +1,3 @@
-- Holder
+- [Configuration](./configuration/README.md)
+- [Development](./development.md)
+- [Interfaces](./interfaces/README.md)

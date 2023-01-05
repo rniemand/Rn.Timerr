@@ -1,6 +1,6 @@
 using Rn.Timerr.Models;
 using Rn.Timerr.Models.Config;
-using Rn.Timerr.Repo;
+using Rn.Timerr.Repos;
 
 namespace Rn.Timerr.Services;
 

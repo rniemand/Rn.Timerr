@@ -1,7 +1,7 @@
 using Dapper;
 using Rn.Timerr.Models.Entities;
 
-namespace Rn.Timerr.Repo;
+namespace Rn.Timerr.Repos;
 
 interface IJobsRepo
 {

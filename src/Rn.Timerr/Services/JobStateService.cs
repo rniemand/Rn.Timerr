@@ -1,7 +1,7 @@
 using Rn.Timerr.Extensions;
 using Rn.Timerr.Models;
 using Rn.Timerr.Models.Config;
-using Rn.Timerr.Repo;
+using Rn.Timerr.Repos;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Services;

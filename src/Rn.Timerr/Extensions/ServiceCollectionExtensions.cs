@@ -5,9 +5,9 @@ using RnCore.Abstractions;
 using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
-using Rn.Timerr.Repo;
 using Microsoft.Extensions.Configuration;
 using Rn.Timerr.Models.Config;
+using Rn.Timerr.Repos;
 
 namespace Rn.Timerr.Extensions;
 
