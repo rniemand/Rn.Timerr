@@ -2,3 +2,4 @@
 - [Development](./development.md)
 - [Docker](./docker.md)
 - [Interfaces](./interfaces/README.md)
+- [Misc.](./misc/README.md)

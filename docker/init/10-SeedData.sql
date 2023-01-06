@@ -40,3 +40,18 @@ VALUES
 	('BackupObsidian', 'ssh.pass', 'Dev', 'string',  'password');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupObsidian', 'Dev', 1);
+
+
+-- ===============================================================================================================================
+-- VerifyMariaDbBackups
+-- ===============================================================================================================================
+INSERT INTO `Config`
+	(`Category`,`Key`,`Host`,`Type`,`Value`)
+VALUES
+	('VerifyMariaDbBackups', 'configFile',      'Dev', 'string',  '\\\\192.168.0.60\\Backups\\app-data\\rn-timerr\\job-config\\VerifyMariaDbBackups\\config.json'),
+	('VerifyMariaDbBackups', 'NextRunTemplate', 'Dev', 'string',  'yyyy-MM-ddT09:00:00.0000000-07:00');
+
+
+	
+
+INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('VerifyMariaDbBackups', 'Dev', 1);
