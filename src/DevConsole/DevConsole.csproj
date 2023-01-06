@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="RnCore.Mailer" Version="6.0.1.100" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Rn.Timerr\Rn.Timerr.csproj" />
   </ItemGroup>
 

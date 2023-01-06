@@ -1,5 +1,5 @@
 {
-  "Rn.MailUtils": {
+  "RnCore.Mailer": {
     "host": "smtp.gmail.com",
     "port": 587,
     "username": "xxx",

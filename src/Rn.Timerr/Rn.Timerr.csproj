@@ -17,6 +17,7 @@
     <PackageReference Include="NLog.Extensions.Logging" Version="5.2.1" />
     <PackageReference Include="RnCore.Abstractions" Version="6.0.0.105" />
     <PackageReference Include="RnCore.Logging" Version="6.0.0.104" />
+    <PackageReference Include="RnCore.Mailer" Version="6.0.1.100" />
     <PackageReference Include="SSH.NET" Version="2020.0.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>

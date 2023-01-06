@@ -6,9 +6,9 @@ using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
 using Microsoft.Extensions.Configuration;
-using Rn.Timerr.Mailer;
 using Rn.Timerr.Models.Config;
 using Rn.Timerr.Repos;
+using RnCore.Mailer;
 
 namespace Rn.Timerr.Extensions;
 
@@ -23,7 +23,7 @@ static class ServiceCollectionExtensions
       .AddSingleton(GetRnTimerrConfig(configuration))
 
       // Other libs
-      .AddRnMailUtils(configuration)
+      .AddRnMailer(configuration)
 
       // Abstractions
       .AddSingleton<IDirectoryAbstraction, DirectoryAbstraction>()
@@ -53,7 +53,7 @@ static class ServiceCollectionExtensions
 
     var implementors = assembly
       .GetTypes()
-      .Where(t => t.IsClass && !t.IsAbstract && t.IsAssignableTo(targetType))
+      .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsAssignableTo(targetType))
       .ToList();
 
     foreach (Type? implType in implementors)

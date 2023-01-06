@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Rn.Timerr;
-using Rn.Timerr.Mailer;
+using RnCore.Mailer.Builders;
+using RnCore.Mailer.Config;
+using RnCore.Mailer.Factories;
 
 var templateHelper = DIContainer.Services.GetRequiredService<IMailTemplateHelper>();
 var mailConfig = DIContainer.Services.GetRequiredService<RnMailConfig>();
