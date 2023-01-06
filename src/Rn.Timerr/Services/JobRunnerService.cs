@@ -1,11 +1,15 @@
+using InfluxDB.Client.Api.Service;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Extensions;
 using Rn.Timerr.Jobs;
+using Rn.Timerr.Metrics;
 using Rn.Timerr.Models;
 using Rn.Timerr.Models.Config;
 using Rn.Timerr.Models.Entities;
 using Rn.Timerr.Repos;
 using RnCore.Logging;
+using RnCore.Metrics;
+using RnCore.Metrics.Extensions;
 
 namespace Rn.Timerr.Services;
 
@@ -20,6 +24,7 @@ class JobRunnerService : IJobRunnerService
   private readonly List<IRunnableJob> _jobs;
   private readonly IJobConfigService _jobConfigService;
   private readonly IJobStateService _jobStateService;
+  private readonly RnCore.Metrics.IMetricsService _metricsService;
   private readonly IJobsRepo _jobsRepo;
   private readonly RnTimerrConfig _config;
   private readonly List<JobEntity> _enabledJobs = new();
@@ -30,12 +35,14 @@ class JobRunnerService : IJobRunnerService
     IJobConfigService jobConfigService,
     IJobStateService jobStateService,
     RnTimerrConfig config,
-    IJobsRepo jobsRepo)
+    IJobsRepo jobsRepo,
+    RnCore.Metrics.IMetricsService metricsService)
   {
     _jobConfigService = jobConfigService;
     _jobStateService = jobStateService;
     _config = config;
     _jobsRepo = jobsRepo;
+    _metricsService = metricsService;
     _logger = logger;
     _jobs = runnableJobs.ToList();
   }
@@ -83,7 +90,24 @@ class JobRunnerService : IJobRunnerService
   // Internal methods
   private async Task RefreshEnabledJobs()
   {
-    _enabledJobs.Clear();
-    _enabledJobs.AddRange(await _jobsRepo.GetJobsAsync(_config.Host));
+    var builder = new ServiceMetricBuilder(nameof(JobRunnerService), nameof(RefreshEnabledJobs))
+      .WithSuccess(true);
+
+    try
+    {
+      using (builder.WithTiming())
+      {
+        _enabledJobs.Clear();
+        _enabledJobs.AddRange(await _jobsRepo.GetJobsAsync(_config.Host));
+      }
+    }
+    catch (Exception ex)
+    {
+      builder.WithException(ex);
+    }
+    finally
+    {
+      await _metricsService.SubmitAsync(builder);
+    }
   }
 }
