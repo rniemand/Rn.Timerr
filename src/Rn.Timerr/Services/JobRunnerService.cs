@@ -1,4 +1,3 @@
-using InfluxDB.Client.Api.Service;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Extensions;
 using Rn.Timerr.Jobs;
@@ -8,7 +7,6 @@ using Rn.Timerr.Models.Config;
 using Rn.Timerr.Models.Entities;
 using Rn.Timerr.Repos;
 using RnCore.Logging;
-using RnCore.Metrics;
 using RnCore.Metrics.Extensions;
 
 namespace Rn.Timerr.Services;
@@ -62,27 +60,49 @@ class JobRunnerService : IJobRunnerService
       if (!_enabledJobs.Any(x => x.JobName.IgnoreCaseEquals(job.ConfigKey)))
         continue;
 
-      // Build up the job configuration
-      var jobOptions = new RunningJobOptions(job.ConfigKey, _config.Host)
+      var builder = new JobMetricBuilder(job.ConfigKey)
+        .WithWasRun(false)
+        .WithJobSucceeded(false);
+
+      try
       {
-        Config = await _jobConfigService.GetJobConfig(job.ConfigKey),
-        State = await _jobStateService.GetJobStateAsync(job.ConfigKey),
-        JobStartTime = DateTimeOffset.Now
-      };
+        using (builder.WithTiming())
+        {
+          var jobOptions = new RunningJobOptions(job.ConfigKey, _config.Host)
+          {
+            Config = await _jobConfigService.GetJobConfig(job.ConfigKey),
+            State = await _jobStateService.GetJobStateAsync(job.ConfigKey),
+            JobStartTime = DateTimeOffset.Now
+          };
 
-      if (!job.CanRun(jobOptions))
-        continue;
+          builder.WithOptionsCount(jobOptions.Config.GetOptionCount());
+          if (!job.CanRun(jobOptions))
+            continue;
 
-      _logger.LogInformation("Running Job: {name}", job.Name);
-      var jobResult = await job.RunAsync(jobOptions);
+          _logger.LogInformation("Running Job: {name}", job.Name);
+          var jobResult = await job.RunAsync(jobOptions);
 
-      if (jobResult.Outcome != JobOutcome.Succeeded)
-      {
-        _logger.LogWarning("Job {name} failed: {reason}", job.Name, jobResult.Error);
-        return;
+          builder
+            .WithWasRun(true)
+            .WithJobSucceeded(jobResult.Outcome == JobOutcome.Succeeded);
+
+          if (jobResult.Outcome != JobOutcome.Succeeded)
+          {
+            _logger.LogWarning("Job {name} failed: {reason}", job.Name, jobResult.Error);
+            return;
+          }
+
+          await _jobStateService.PersistStateAsync(jobOptions);
+        }
       }
-
-      await _jobStateService.PersistStateAsync(jobOptions);
+      catch (Exception ex)
+      {
+        builder.WithException(ex);
+      }
+      finally
+      {
+        await _metricsService.SubmitAsync(builder);
+      }
     }
   }
 

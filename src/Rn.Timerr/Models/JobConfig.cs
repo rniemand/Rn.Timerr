@@ -60,4 +60,6 @@ class JobConfig
 
     return bool.TryParse(_config[key].Value, out var parsed) ? parsed : fallback;
   }
+
+  public int GetOptionCount() => _config.Count;
 }

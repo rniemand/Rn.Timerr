@@ -5,11 +5,6 @@ using RnCore.Mailer.Builders;
 using RnCore.Mailer.Config;
 using RnCore.Mailer.Factories;
 
-
-await DIContainer.Services
-  .GetRequiredService<IJobRunnerService>()
-  .RunJobsAsync();
-
 var templateHelper = DIContainer.Services.GetRequiredService<IMailTemplateHelper>();
 var mailConfig = DIContainer.Services.GetRequiredService<RnMailConfig>();
 
