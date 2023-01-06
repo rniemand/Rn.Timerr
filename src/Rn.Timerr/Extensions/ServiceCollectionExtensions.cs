@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Rn.Timerr.Models.Config;
 using Rn.Timerr.Repos;
 using RnCore.Mailer;
+using RnCore.Metrics.Extensions;
+using RnCore.Metrics.InfluxDb;
 
 namespace Rn.Timerr.Extensions;
 
@@ -24,6 +26,8 @@ static class ServiceCollectionExtensions
 
       // Other libs
       .AddRnMailer(configuration)
+      .AddRnCoreMetrics()
+      .AddInfluxDbMetricOutput()
 
       // Abstractions
       .AddSingleton<IDirectoryAbstraction, DirectoryAbstraction>()
