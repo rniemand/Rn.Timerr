@@ -1,0 +1,11 @@
+{
+  "Rn.MailUtils": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "username": "xxx",
+    "password": "xxx",
+    "fromAddress": "xxx",
+    "fromName": "xxx",
+    "templateDir": "xxx"
+  }
+}

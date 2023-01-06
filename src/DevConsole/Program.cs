@@ -1,8 +1,21 @@
 using Microsoft.Extensions.DependencyInjection;
 using Rn.Timerr;
-using Rn.Timerr.Services;
+using Rn.Timerr.Mailer;
 
-var jobRunner = DIContainer.Services.GetRequiredService<IJobRunnerService>();
+var templateHelper = DIContainer.Services.GetRequiredService<IMailTemplateHelper>();
+var mailConfig = DIContainer.Services.GetRequiredService<RnMailConfig>();
 
-await jobRunner.RunJobsAsync();
+var mailMessage = new MailMessageBuilder()
+  .WithTo("niemand.richard@gmail.com")
+  .WithSubject("Testing email code")
+  .WithFrom(mailConfig)
+  .WithHtmlBody(templateHelper.GetTemplateBuilder("test"))
+  .Build();
 
+//await DIContainer.Services
+//  .GetRequiredService<IRnMailUtilsFactory>()
+//  .CreateSmtpClient()
+//  .SendMailAsync(mailMessage);
+
+Console.WriteLine();
+Console.WriteLine();

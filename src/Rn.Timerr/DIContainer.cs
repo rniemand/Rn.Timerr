@@ -17,6 +17,7 @@ internal static class DIContainer
     var config = new ConfigurationBuilder()
       .SetBasePath(Directory.GetCurrentDirectory())
       .AddJsonFile("appsettings.json", true, true)
+      .AddJsonFile("rn-mail.json", true, true)
       .Build();
 
     services

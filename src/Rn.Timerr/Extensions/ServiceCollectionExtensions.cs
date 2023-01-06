@@ -6,6 +6,7 @@ using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
 using Microsoft.Extensions.Configuration;
+using Rn.Timerr.Mailer;
 using Rn.Timerr.Models.Config;
 using Rn.Timerr.Repos;
 
@@ -20,6 +21,10 @@ static class ServiceCollectionExtensions
 
     return services
       .AddSingleton(GetRnTimerrConfig(configuration))
+
+      // Other libs
+      .AddRnMailUtils(configuration)
+
       // Abstractions
       .AddSingleton<IDirectoryAbstraction, DirectoryAbstraction>()
       .AddSingleton<IFileAbstraction, FileAbstraction>()

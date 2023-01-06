@@ -33,3 +33,5 @@ Obj/
 *.ncrunchsolution
 *.crunchsolution\.*
 *.executiontimes\.*
+
+src/Rn.Timerr/rn-mail.json
