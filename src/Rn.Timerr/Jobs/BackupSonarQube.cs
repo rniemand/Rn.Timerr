@@ -1,6 +1,7 @@
 using System.Data.SqlClient;
 using Renci.SshNet;
 using Rn.Timerr.Enums;
+using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 using RnCore.Logging;
 
@@ -51,7 +52,7 @@ internal class BackupSonarQube : IRunnableJob
 
 
   // Internal methods
-  private BackupSonarQubeConfig MapConfiguration(RunningJobOptions options) =>
+  private static BackupSonarQubeConfig MapConfiguration(RunningJobOptions options) =>
     new()
     {
       SqlConnectionString = options.Config.GetStringValue("SqlConnection"),
@@ -112,7 +113,7 @@ internal class BackupSonarQube : IRunnableJob
       return;
 
     _logger.LogError("Error running command '{cmd}': {error}", commandOutput, commandOutput.Error);
-    throw new Exception($"ssh command error: {commandOutput.Error}");
+    throw new RnTimerrException($"ssh command error: {commandOutput.Error}");
   }
 }
 

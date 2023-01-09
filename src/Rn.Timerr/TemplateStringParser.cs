@@ -10,14 +10,14 @@ class TemplateStringParser
 
   public string Parse(string template)
   {
-    template = processDatePlaceholders(template);
+    template = ProcessDatePlaceholders(template);
 
     return template;
   }
 
 
   // Internal methods
-  private string processDatePlaceholders(string template)
+  private static string ProcessDatePlaceholders(string template)
   {
     if (!RX_DATE.IsMatch(template))
       return template;

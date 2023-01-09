@@ -202,13 +202,13 @@ class BackupSatisfactory : IRunnableJob
       _managedSaveRx = new Regex(managedSaveRx, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     if (string.IsNullOrWhiteSpace(_sourcePath))
-      throw new Exception("Source: must have a value");
+      throw new RnTimerrException("Source: must have a value");
 
     if (string.IsNullOrWhiteSpace(_destPath))
-      throw new Exception("Destination: must have a value");
+      throw new RnTimerrException("Destination: must have a value");
 
     if (string.IsNullOrWhiteSpace(_fileName))
-      throw new Exception("BackupFileName: must have a value");
+      throw new RnTimerrException("BackupFileName: must have a value");
 
     if (!_fileName.EndsWith(".zip"))
       _fileName += ".zip";
