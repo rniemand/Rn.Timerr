@@ -93,13 +93,12 @@ class VerifyMariaDbBackups : IRunnableJob
     if (!File.Exists(config.ConfigFile))
       return new DbBackupVerifyConfig();
 
-    var parser = new TemplateStringParser();
     var rawJson = File.ReadAllText(config.ConfigFile);
     var parsedConfig = JsonConvert.DeserializeObject<DbBackupVerifyConfig>(rawJson);
 
     foreach (var rule in parsedConfig!.Rules)
     {
-      rule.FilePath = parser.Parse(rule.FilePath);
+      rule.FilePath = TemplateStringParser.Parse(rule.FilePath);
       rule.MinFileSizeBytes = rule.MinFileSizeKb * 1024;
     }
 

@@ -8,7 +8,7 @@ class TemplateStringParser
   private static Regex RX_DATE = new("(\\{date:([^\\}]+)\\})", RegexOptions.Compiled);
 
 
-  public string Parse(string template)
+  public static string Parse(string template)
   {
     template = ProcessDatePlaceholders(template);
 
