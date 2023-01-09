@@ -6,6 +6,7 @@ namespace Rn.Timerr.Models;
 class JobConfig
 {
   private readonly Dictionary<string, ConfigEntity> _config = new(StringComparer.InvariantCultureIgnoreCase);
+  private readonly Dictionary<string, List<ConfigEntity>> _collectionConfig = new(StringComparer.InvariantCultureIgnoreCase);
 
   public JobConfig() { }
 
@@ -13,10 +14,32 @@ class JobConfig
     : this()
   {
     foreach (var currentConfig in config.Where(c => c.Host == "*"))
-      _config[currentConfig.Key] = currentConfig;
+    {
+      if (currentConfig.Collection)
+      {
+        if (!_collectionConfig.ContainsKey(currentConfig.Key))
+          _collectionConfig[currentConfig.Key] = new List<ConfigEntity>();
+        _collectionConfig[currentConfig.Key].Add(currentConfig);
+      }
+      else
+      {
+        _config[currentConfig.Key] = currentConfig;
+      }
+    }
 
     foreach (var currentConfig in config.Where(c => c.Host != "*"))
-      _config[currentConfig.Key] = currentConfig;
+    {
+      if (currentConfig.Collection)
+      {
+        if (!_collectionConfig.ContainsKey(currentConfig.Key))
+          _collectionConfig[currentConfig.Key] = new List<ConfigEntity>();
+        _collectionConfig[currentConfig.Key].Add(currentConfig);
+      }
+      else
+      {
+        _config[currentConfig.Key] = currentConfig;
+      }
+    }
   }
 
   public bool HasStringValue(string key)
@@ -44,6 +67,10 @@ class JobConfig
   }
 
   public string GetStringValue(string key) => !HasStringValue(key) ? string.Empty : _config[key].Value;
+
+  public List<string> GetStringCollection(string key) => !_collectionConfig.ContainsKey(key)
+    ? new List<string>()
+    : _collectionConfig[key].Select(entry => entry.Value).ToList();
 
   public int GetIntValue(string key, int fallback)
   {
