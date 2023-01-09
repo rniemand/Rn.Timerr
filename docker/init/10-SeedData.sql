@@ -51,7 +51,29 @@ VALUES
 	('VerifyMariaDbBackups', 'configFile',      'Dev', 'string',  '\\\\192.168.0.60\\Backups\\app-data\\rn-timerr\\job-config\\VerifyMariaDbBackups\\config.json'),
 	('VerifyMariaDbBackups', 'NextRunTemplate', 'Dev', 'string',  'yyyy-MM-ddT09:00:00.0000000-07:00');
 
-
-	
-
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('VerifyMariaDbBackups', 'Dev', 1);
+
+-- ===============================================================================================================================
+-- VerifyMariaDbBackups
+-- ===============================================================================================================================
+INSERT INTO `Config`
+	(`Category`,`Key`, `Collection`,`Host`,`Type`,`Value`)
+VALUES
+	('BackupAppData', 'backupDestRoot', 0, 'Dev', 'string',  '/mnt/user/Backups/app-data-backups'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/binhex-nginx'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/dns-updater'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/feed-scraper'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/grafana'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/mosquitto'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/my-home'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/nas-file-indexer'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/nas-landing-page'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/rn-go'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/rn-timerr'),
+	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/teletgraf'),
+	('BackupAppData', 'ssh.host',       0, 'Dev', 'string',  '127.0.0.1'),
+	('BackupAppData', 'ssh.port',       0, 'Dev', 'int',     '22'),
+	('BackupAppData', 'ssh.user',       0, 'Dev', 'string',  'username'),
+	('BackupAppData', 'ssh.pass',       0, 'Dev', 'string',  'password');
+
+INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupAppData', 'Dev', 1);
