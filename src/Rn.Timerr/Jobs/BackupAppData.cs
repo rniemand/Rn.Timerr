@@ -1,5 +1,6 @@
 using Renci.SshNet;
 using Rn.Timerr.Enums;
+using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 using RnCore.Logging;
 
@@ -62,7 +63,7 @@ class BackupAppData : IRunnableJob
 
 
   // Internal methods
-  private BackupAppDataConfig MapConfiguration(RunningJobOptions options) =>
+  private static BackupAppDataConfig MapConfiguration(RunningJobOptions options) =>
     new()
     {
       Folders = options.Config.GetStringCollection("directory"),
@@ -102,7 +103,7 @@ class BackupAppData : IRunnableJob
       return;
 
     _logger.LogError("Error running command '{cmd}': {error}", commandOutput, commandOutput.Error);
-    throw new Exception($"ssh command error: {commandOutput.Error}");
+    throw new RnTimerrException($"ssh command error: {commandOutput.Error}");
   }
 
   private void ScheduleNextRunTime(RunningJobOptions options)
