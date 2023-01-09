@@ -51,6 +51,7 @@ class BackupAppData : IRunnableJob
       RunSshCommand(sshClient, $"mkdir -p \"{destPath}\"");
       RunSshCommand(sshClient, $"rm \"{destPath}$(date '+%F')-{directory}.zip\"", false);
       RunSshCommand(sshClient, $"zip -r \"{destPath}$(date '+%F')-{directory}.zip\" \"{folder}\"");
+      RunSshCommand(sshClient, $"chmod 0777 \"{destPath}$(date '+%F')-{directory}.zip\"");
     }
 
     ScheduleNextRunTime(options);
