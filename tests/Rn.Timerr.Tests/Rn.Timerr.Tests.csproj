@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
+    <ProjectGuid>2DAD74E7-850C-44C2-A734-1CC4ADC2CDDF</ProjectGuid>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

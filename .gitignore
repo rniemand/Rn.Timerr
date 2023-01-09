@@ -35,3 +35,11 @@ Obj/
 *.executiontimes\.*
 
 src/Rn.Timerr/rn-mail.json
+
+src/.sonarlint/Rn.Timerr.slconfig
+
+src/.sonarlint/rn.timerr/CSharp/SonarLint.xml
+
+src/.sonarlint/rn.timerrcsharp.ruleset
+
+src/.sonarlint/sonar.settings.json
