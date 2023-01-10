@@ -4,9 +4,9 @@ namespace Rn.Timerr;
 
 class TemplateStringParser
 {
-  // {date:YYYY-mm}
   private static Regex RX_DATE = new("(\\{date:([^\\}]+)\\})", RegexOptions.Compiled);
 
+  protected TemplateStringParser() { }
 
   public static string Parse(string template)
   {
