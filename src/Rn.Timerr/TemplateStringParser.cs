@@ -4,20 +4,20 @@ namespace Rn.Timerr;
 
 class TemplateStringParser
 {
-  // {date:YYYY-mm}
   private static Regex RX_DATE = new("(\\{date:([^\\}]+)\\})", RegexOptions.Compiled);
 
+  protected TemplateStringParser() { }
 
-  public string Parse(string template)
+  public static string Parse(string template)
   {
-    template = processDatePlaceholders(template);
+    template = ProcessDatePlaceholders(template);
 
     return template;
   }
 
 
   // Internal methods
-  private string processDatePlaceholders(string template)
+  private static string ProcessDatePlaceholders(string template)
   {
     if (!RX_DATE.IsMatch(template))
       return template;

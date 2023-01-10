@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text.RegularExpressions;
 using Rn.Timerr.Enums;
+using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 using RnCore.Abstractions;
 using RnCore.Logging;
@@ -134,10 +135,10 @@ class BackupSatisfactory : IRunnableJob
     var filePath = _path.Combine(manageDir, $"Satisfactory_Daily_{dateString}.zip");
     _file.Move(lastDailySaveFile.FullName, filePath, true);
 
-    foreach (var saveFile in saveFiles.Where(f => _file.Exists(f.FullName)))
+    foreach (var saveFile in saveFiles.Where(f => _file.Exists(f.FullName)).Select(x => x.FullName))
     {
-      _logger.LogDebug("Removing redundant save file: {path}", saveFile.FullName);
-      _file.Delete(saveFile.FullName);
+      _logger.LogDebug("Removing redundant save file: {path}", saveFile);
+      _file.Delete(saveFile);
     }
   }
 
@@ -175,19 +176,19 @@ class BackupSatisfactory : IRunnableJob
     _directory.CreateDirectory(path);
 
     if (!_directory.Exists(path))
-      throw new Exception($"Unable to create directory: {path}");
+      throw new RnTimerrException($"Unable to create directory: {path}");
   }
 
   private void SetConfiguration(RunningJobOptions runningJobConfig)
   {
     if (!runningJobConfig.Config.HasStringValue("Source"))
-      throw new Exception("Missing configuration for: Source");
+      throw new RnTimerrException("Missing configuration for: Source");
 
     if (!runningJobConfig.Config.HasStringValue("Destination"))
-      throw new Exception("Missing configuration for: Destination");
+      throw new RnTimerrException("Missing configuration for: Destination");
 
     if (!runningJobConfig.Config.HasStringValue("BackupFileName"))
-      throw new Exception("Missing configuration for: BackupFileName");
+      throw new RnTimerrException("Missing configuration for: BackupFileName");
 
     _sourcePath = runningJobConfig.Config.GetStringValue("Source");
     _destPath = runningJobConfig.Config.GetStringValue("Destination");
@@ -201,13 +202,13 @@ class BackupSatisfactory : IRunnableJob
       _managedSaveRx = new Regex(managedSaveRx, RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     if (string.IsNullOrWhiteSpace(_sourcePath))
-      throw new Exception("Source: must have a value");
+      throw new RnTimerrException("Source: must have a value");
 
     if (string.IsNullOrWhiteSpace(_destPath))
-      throw new Exception("Destination: must have a value");
+      throw new RnTimerrException("Destination: must have a value");
 
     if (string.IsNullOrWhiteSpace(_fileName))
-      throw new Exception("BackupFileName: must have a value");
+      throw new RnTimerrException("BackupFileName: must have a value");
 
     if (!_fileName.EndsWith(".zip"))
       _fileName += ".zip";

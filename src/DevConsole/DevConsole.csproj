@@ -5,7 +5,13 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <CodeAnalysisRuleSet>..\.sonarlint\rn.timerrcsharp.ruleset</CodeAnalysisRuleSet>
+    <ProjectGuid>89A66A32-AEE7-458E-9A11-A70FE83ED420</ProjectGuid>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\.sonarlint\rn.timerr\CSharp\SonarLint.xml" Link="SonarLint.xml" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="RnCore.Mailer" Version="6.0.1.100" />

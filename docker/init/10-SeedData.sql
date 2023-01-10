@@ -21,10 +21,7 @@ INSERT INTO `Config`
 	(`Category`,`Key`,`Host`,`Type`,`Value`)
 VALUES
 	('BackupSonarQube', 'SqlConnection', 'Dev', 'string',  'Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;'),
-	('BackupSonarQube', 'ssh.host',      'Dev', 'string',  '127.0.0.1'),
-	('BackupSonarQube', 'ssh.port',      'Dev', 'int',     '22'),
-	('BackupSonarQube', 'ssh.user',      'Dev', 'string',  'username'),
-	('BackupSonarQube', 'ssh.pass',      'Dev', 'string',  'password');
+	('BackupSonarQube', 'ssh.creds',     'Dev', 'string',  'SshNas');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupSonarQube', 'Dev', 1);
 
@@ -34,10 +31,7 @@ INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupSonarQube', 'De
 INSERT INTO `Config`
 	(`Category`,`Key`,`Host`,`Type`,`Value`)
 VALUES
-	('BackupObsidian', 'ssh.host', 'Dev', 'string',  '127.0.0.1'),
-	('BackupObsidian', 'ssh.port', 'Dev', 'int',     '22'),
-	('BackupObsidian', 'ssh.user', 'Dev', 'string',  'username'),
-	('BackupObsidian', 'ssh.pass', 'Dev', 'string',  'password');
+	('BackupObsidian', 'ssh.creds', 'Dev', 'string',  'SshNas');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupObsidian', 'Dev', 1);
 
@@ -54,7 +48,7 @@ VALUES
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('VerifyMariaDbBackups', 'Dev', 1);
 
 -- ===============================================================================================================================
--- VerifyMariaDbBackups
+-- BackupAppData
 -- ===============================================================================================================================
 INSERT INTO `Config`
 	(`Category`,`Key`, `Collection`,`Host`,`Type`,`Value`)
@@ -71,9 +65,6 @@ VALUES
 	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/rn-go'),
 	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/rn-timerr'),
 	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/teletgraf'),
-	('BackupAppData', 'ssh.host',       0, 'Dev', 'string',  '127.0.0.1'),
-	('BackupAppData', 'ssh.port',       0, 'Dev', 'int',     '22'),
-	('BackupAppData', 'ssh.user',       0, 'Dev', 'string',  'username'),
-	('BackupAppData', 'ssh.pass',       0, 'Dev', 'string',  'password');
+	('BackupAppData', 'ssh.creds',      0, 'Dev', 'string',  'SshNas');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupAppData', 'Dev', 1);

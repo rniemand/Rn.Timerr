@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Net.Mail;
 using Newtonsoft.Json;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Models;
@@ -83,25 +81,24 @@ class VerifyMariaDbBackups : IRunnableJob
 
 
   // Internal methods
-  private VerifyMariaDbBackupsConfig MapConfig(RunningJobOptions options) => new()
+  private static VerifyMariaDbBackupsConfig MapConfig(RunningJobOptions options) => new()
   {
     ConfigFile = options.Config.GetStringValue("configFile"),
     NextRunTemplate = options.Config.GetStringValue("NextRunTemplate"),
   };
 
-  private DbBackupVerifyConfig GetDbCheckConfig(VerifyMariaDbBackupsConfig config)
+  private static DbBackupVerifyConfig GetDbCheckConfig(VerifyMariaDbBackupsConfig config)
   {
     // TODO: [ABSTRACT] (VerifyMariaDbBackups.GetDbCheckConfig) Use abstraction for this
     if (!File.Exists(config.ConfigFile))
       return new DbBackupVerifyConfig();
 
-    var parser = new TemplateStringParser();
     var rawJson = File.ReadAllText(config.ConfigFile);
     var parsedConfig = JsonConvert.DeserializeObject<DbBackupVerifyConfig>(rawJson);
 
     foreach (var rule in parsedConfig!.Rules)
     {
-      rule.FilePath = parser.Parse(rule.FilePath);
+      rule.FilePath = TemplateStringParser.Parse(rule.FilePath);
       rule.MinFileSizeBytes = rule.MinFileSizeKb * 1024;
     }
 

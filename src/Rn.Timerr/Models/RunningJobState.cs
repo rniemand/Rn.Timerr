@@ -1,4 +1,5 @@
 using Rn.Timerr.Enums;
+using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models.Entities;
 
 namespace Rn.Timerr.Models;
@@ -27,15 +28,15 @@ class RunningJobState
   public DateTimeOffset GetDateTimeOffsetValue(string key)
   {
     if (!ContainsKey(key))
-      throw new Exception($"Unable to find DateTime key: {key}");
+      throw new RnTimerrException($"Unable to find DateTime key: {key}");
 
     if (_state[key].Type.ToLower() != DbValueType.DateTime)
-      throw new Exception($"Config key '{key}' is not of type DateTimeOffset");
+      throw new RnTimerrException($"Config key '{key}' is not of type DateTimeOffset");
 
     if (DateTimeOffset.TryParse(_state[key].Value, out var parsed))
       return parsed;
 
-    throw new Exception($"Unable to parse '{_state[key].Value}' as DateTimeOffset");
+    throw new RnTimerrException($"Unable to parse '{_state[key].Value}' as DateTimeOffset");
   }
 
   public void SetValue(string key, DateTimeOffset value)
