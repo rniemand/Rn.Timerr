@@ -6,6 +6,7 @@ using RnCore.Logging;
 using System.Reflection;
 using Rn.Timerr.Jobs;
 using Microsoft.Extensions.Configuration;
+using Rn.Timerr.Factories;
 using Rn.Timerr.Models.Config;
 using Rn.Timerr.Repos;
 using RnCore.Mailer;
@@ -34,6 +35,9 @@ static class ServiceCollectionExtensions
       .AddSingleton<IFileAbstraction, FileAbstraction>()
       .AddSingleton<IDateTimeAbstraction, DateTimeAbstraction>()
       .AddSingleton<IPathAbstraction, PathAbstraction>()
+
+      // Factories
+      .AddSingleton<ISshClientFactory, SshClientFactory>()
 
       // Services
       .AddSingleton<IJobRunnerService, JobRunnerService>()

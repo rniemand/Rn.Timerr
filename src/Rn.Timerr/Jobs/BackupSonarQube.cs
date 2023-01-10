@@ -1,9 +1,7 @@
 using System.Data.SqlClient;
-using Renci.SshNet;
 using Rn.Timerr.Enums;
-using Rn.Timerr.Exceptions;
+using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
-using Rn.Timerr.Services;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
@@ -14,13 +12,12 @@ internal class BackupSonarQube : IRunnableJob
   public string ConfigKey => nameof(BackupSonarQube);
 
   private readonly ILoggerAdapter<BackupSonarQube> _logger;
-  private readonly ICredentialsService _credentialsService;
+  private readonly ISshClientFactory _sshClientFactory;
 
-  public BackupSonarQube(ILoggerAdapter<BackupSonarQube> logger,
-    ICredentialsService credentialsService)
+  public BackupSonarQube(ILoggerAdapter<BackupSonarQube> logger, ISshClientFactory sshClientFactory)
   {
     _logger = logger;
-    _credentialsService = credentialsService;
+    _sshClientFactory = sshClientFactory;
   }
 
 
@@ -41,14 +38,14 @@ internal class BackupSonarQube : IRunnableJob
 
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    var config = await MapConfiguration(options);
+    var config = MapConfiguration(options);
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
 
     await CreateDbBackupAsync(config);
-    ProcessDbBackup(config);
+    await ProcessDbBackup(config);
     ScheduleNextRunTime(options);
 
     return jobOutcome.AsSucceeded();
@@ -56,21 +53,12 @@ internal class BackupSonarQube : IRunnableJob
 
 
   // Internal methods
-  private async Task<BackupSonarQubeConfig> MapConfiguration(RunningJobOptions options)
-  {
-    var credentialsName = options.Config.GetStringValue("ssh.creds");
-    if (string.IsNullOrWhiteSpace(credentialsName))
-    {
-      _logger.LogError("Missing required config value: {name}", "ssh.creds");
-      return new BackupSonarQubeConfig();
-    }
-
-    return new BackupSonarQubeConfig
+  private static BackupSonarQubeConfig MapConfiguration(RunningJobOptions options) =>
+    new()
     {
       SqlConnectionString = options.Config.GetStringValue("SqlConnection"),
-      SshCredentials = await _credentialsService.GetSshCredentials(credentialsName)
+      SshConnectionName = options.Config.GetStringValue("ssh.creds")
     };
-  }
 
   private async Task CreateDbBackupAsync(BackupSonarQubeConfig config)
   {
@@ -87,15 +75,15 @@ internal class BackupSonarQube : IRunnableJob
     _logger.LogInformation("   ... backup completed");
   }
 
-  private void ProcessDbBackup(BackupSonarQubeConfig config)
+  private async Task ProcessDbBackup(BackupSonarQubeConfig config)
   {
-    var sshClient = GetSshClient(config);
+    var sshClient = await _sshClientFactory.GetSshClient(config.SshConnectionName);
 
-    RunSshCommand(sshClient, "chmod 0777 /mnt/user/appdata/sql-server/data/SonarQube.bak");
-    RunSshCommand(sshClient, "mv /mnt/user/appdata/sql-server/data/SonarQube.bak /mnt/user/Backups/db-mssql/SonarQube.bak");
-    RunSshCommand(sshClient, "rm \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\"", false);
-    RunSshCommand(sshClient, "zip -r \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\" \"/mnt/user/Backups/db-mssql/SonarQube.bak\"");
-    RunSshCommand(sshClient, "rm /mnt/user/Backups/db-mssql/SonarQube.bak");
+    sshClient.RunCommand("chmod 0777 /mnt/user/appdata/sql-server/data/SonarQube.bak");
+    sshClient.RunCommand("mv /mnt/user/appdata/sql-server/data/SonarQube.bak /mnt/user/Backups/db-mssql/SonarQube.bak");
+    sshClient.RunCommand("rm \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\"", false);
+    sshClient.RunCommand("zip -r \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\" \"/mnt/user/Backups/db-mssql/SonarQube.bak\"");
+    sshClient.RunCommand("rm /mnt/user/Backups/db-mssql/SonarQube.bak");
   }
 
   private void ScheduleNextRunTime(RunningJobOptions options)
@@ -104,40 +92,19 @@ internal class BackupSonarQube : IRunnableJob
     options.State.SetValue("NextRunTime", nextRunTime);
     _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
-
-  private static SshClient GetSshClient(BackupSonarQubeConfig config)
-  {
-    var credentials = new PasswordAuthenticationMethod(config.SshCredentials.User, config.SshCredentials.Pass);
-    var sshClient = new SshClient(new ConnectionInfo(config.SshCredentials.Host, config.SshCredentials.Port, config.SshCredentials.User, credentials));
-    sshClient.Connect();
-    return sshClient;
-  }
-
-  private void RunSshCommand(SshClient client, string commandText, bool throwOnError = true)
-  {
-    _logger.LogDebug("Running SSH command: {cmd}", commandText);
-
-    var commandOutput = client.RunCommand(commandText);
-
-    if (string.IsNullOrWhiteSpace(commandOutput.Error) || !throwOnError)
-      return;
-
-    _logger.LogError("Error running command '{cmd}': {error}", commandOutput, commandOutput.Error);
-    throw new RnTimerrException($"ssh command error: {commandOutput.Error}");
-  }
 }
 
 class BackupSonarQubeConfig
 {
   public string SqlConnectionString { get; set; } = string.Empty;
-  public SshCredentials SshCredentials { get; set; } = new();
+  public string SshConnectionName { get; set; } = string.Empty;
 
   public bool IsValid()
   {
     if (string.IsNullOrWhiteSpace(SqlConnectionString))
       return false;
 
-    if (!SshCredentials.IsValid())
+    if (string.IsNullOrWhiteSpace(SshConnectionName))
       return false;
 
     return true;
