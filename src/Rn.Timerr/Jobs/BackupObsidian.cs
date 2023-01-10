@@ -1,8 +1,6 @@
-using Renci.SshNet;
 using Rn.Timerr.Enums;
-using Rn.Timerr.Exceptions;
+using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
-using Rn.Timerr.Services;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
@@ -13,16 +11,13 @@ internal class BackupObsidian : IRunnableJob
   public string ConfigKey => nameof(BackupObsidian);
 
   private readonly ILoggerAdapter<BackupObsidian> _logger;
-  private readonly ICredentialsService _credentialsService;
+  private readonly ISshClientFactory _sshClientFactory;
 
-
-  public BackupObsidian(ILoggerAdapter<BackupObsidian> logger,
-    ICredentialsService credentialsService)
+  public BackupObsidian(ILoggerAdapter<BackupObsidian> logger, ISshClientFactory sshClientFactory)
   {
     _logger = logger;
-    _credentialsService = credentialsService;
+    _sshClientFactory = sshClientFactory;
   }
-
 
   // Interface methods
   public bool CanRun(RunningJobOptions options)
@@ -41,16 +36,16 @@ internal class BackupObsidian : IRunnableJob
 
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    var config = await MapConfiguration(options);
+    var config = MapConfiguration(options);
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
 
     // Execute the backup commands
-    var sshClient = GetSshClient(config);
-    RunSshCommand(sshClient, "rm \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\"", false);
-    RunSshCommand(sshClient, "zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
+    var sshClient = await _sshClientFactory.GetSshClient(config.SshCredentials);
+    sshClient.RunSshCommand("rm \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\"", false);
+    sshClient.RunSshCommand("zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
 
     // Schedule the next run time
     ScheduleNextRunTime(options);
@@ -61,41 +56,11 @@ internal class BackupObsidian : IRunnableJob
 
 
   // Internal methods
-  private async Task<BackupObsidianConfig> MapConfiguration(RunningJobOptions options)
-  {
-    var credentialsName = options.Config.GetStringValue("ssh.creds");
-    if (string.IsNullOrWhiteSpace(credentialsName))
+  private static BackupObsidianConfig MapConfiguration(RunningJobOptions options) =>
+    new()
     {
-      _logger.LogError("Missing required config value: {name}", "ssh.creds");
-      return new BackupObsidianConfig();
-    }
-
-    return new BackupObsidianConfig
-    {
-      SshCredentials = await _credentialsService.GetSshCredentials(credentialsName)
+      SshCredentials = options.Config.GetStringValue("ssh.creds")
     };
-  }
-
-  private static SshClient GetSshClient(BackupObsidianConfig config)
-  {
-    var credentials = new PasswordAuthenticationMethod(config.SshCredentials.User, config.SshCredentials.Pass);
-    var sshClient = new SshClient(new ConnectionInfo(config.SshCredentials.Host, config.SshCredentials.Port, config.SshCredentials.User, credentials));
-    sshClient.Connect();
-    return sshClient;
-  }
-
-  private void RunSshCommand(SshClient client, string commandText, bool throwOnError = true)
-  {
-    _logger.LogDebug("Running SSH command: {cmd}", commandText);
-
-    var commandOutput = client.RunCommand(commandText);
-
-    if (string.IsNullOrWhiteSpace(commandOutput.Error) || !throwOnError)
-      return;
-
-    _logger.LogError("Error running command '{cmd}': {error}", commandOutput, commandOutput.Error);
-    throw new RnTimerrException($"ssh command error: {commandOutput.Error}");
-  }
 
   private void ScheduleNextRunTime(RunningJobOptions options)
   {
@@ -107,10 +72,7 @@ internal class BackupObsidian : IRunnableJob
 
 class BackupObsidianConfig
 {
-  public SshCredentials SshCredentials { get; set; } = new();
+  public string SshCredentials { get; set; } = string.Empty;
 
-  public bool IsValid()
-  {
-    return SshCredentials.IsValid();
-  }
+  public bool IsValid() => !string.IsNullOrWhiteSpace(SshCredentials);
 }
