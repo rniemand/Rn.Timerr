@@ -39,3 +39,14 @@ CREATE TABLE `Jobs` (
 )
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB;
+
+CREATE TABLE `Credentials` (
+	`Host` VARCHAR(32) NOT NULL COLLATE 'utf8mb3_general_ci',
+	`Name` VARCHAR(32) NOT NULL COLLATE 'utf8mb3_general_ci',
+	`Deleted` BIT(1) NOT NULL DEFAULT b'0',
+	`Credentials` TEXT NOT NULL COLLATE 'utf8mb3_general_ci',
+	INDEX `Host` (`Host`) USING BTREE,
+	INDEX `Deleted` (`Deleted`) USING BTREE
+)
+COLLATE='utf8mb3_general_ci'
+ENGINE=InnoDB;

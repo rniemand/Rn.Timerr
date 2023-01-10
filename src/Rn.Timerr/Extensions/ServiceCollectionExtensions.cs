@@ -39,12 +39,14 @@ static class ServiceCollectionExtensions
       .AddSingleton<IJobRunnerService, JobRunnerService>()
       .AddSingleton<IJobConfigService, JobConfigService>()
       .AddSingleton<IJobStateService, JobStateService>()
+      .AddSingleton<ICredentialsService, CredentialsService>()
       
       // Database
       .AddSingleton<IConnectionFactory, ConnectionFactory>()
       .AddSingleton<IConfigRepo, ConfigRepo>()
       .AddSingleton<IStateRepo, StateRepo>()
       .AddSingleton<IJobsRepo, JobsRepo>()
+      .AddSingleton<ICredentialsRepo, CredentialsRepo>()
       
       // Register runnable jobs
       .RegisterImplementations(Assembly.GetExecutingAssembly(), typeof(IRunnableJob));

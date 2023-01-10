@@ -2,6 +2,7 @@ using Renci.SshNet;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
+using Rn.Timerr.Services;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
@@ -12,10 +13,13 @@ class BackupAppData : IRunnableJob
   public string ConfigKey => nameof(BackupAppData);
 
   private readonly ILoggerAdapter<BackupAppData> _logger;
+  private readonly ICredentialsService _credentialsService;
 
-  public BackupAppData(ILoggerAdapter<BackupAppData> logger)
+  public BackupAppData(ILoggerAdapter<BackupAppData> logger,
+    ICredentialsService credentialsService)
   {
     _logger = logger;
+    _credentialsService = credentialsService;
   }
 
 
@@ -37,7 +41,7 @@ class BackupAppData : IRunnableJob
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
-    var config = MapConfiguration(options);
+    var config = await MapConfiguration(options);
 
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
@@ -57,27 +61,33 @@ class BackupAppData : IRunnableJob
 
     ScheduleNextRunTime(options);
     await Task.CompletedTask;
-    
+
     return jobOutcome.AsSucceeded();
   }
 
 
   // Internal methods
-  private static BackupAppDataConfig MapConfiguration(RunningJobOptions options) =>
-    new()
+  private async Task<BackupAppDataConfig> MapConfiguration(RunningJobOptions options)
+  {
+    var credentialsName = options.Config.GetStringValue("ssh.creds");
+    if (string.IsNullOrWhiteSpace(credentialsName))
+    {
+      _logger.LogError("Missing required config value: {name}", "ssh.creds");
+      return new BackupAppDataConfig();
+    }
+
+    return new BackupAppDataConfig
     {
       Folders = options.Config.GetStringCollection("directory"),
       BackupDestRoot = options.Config.GetStringValue("backupDestRoot"),
-      SshHost = options.Config.GetStringValue("ssh.host"),
-      SshPort = options.Config.GetIntValue("ssh.port", 22),
-      SshUser = options.Config.GetStringValue("ssh.user"),
-      SshPass = options.Config.GetStringValue("ssh.pass")
+      SshCredentials = await _credentialsService.GetSshCredentials(credentialsName)
     };
+  }
 
   private static SshClient GetSshClient(BackupAppDataConfig config)
   {
-    var credentials = new PasswordAuthenticationMethod(config.SshUser, config.SshPass);
-    var sshClient = new SshClient(new ConnectionInfo(config.SshHost, config.SshPort, config.SshUser, credentials));
+    var credentials = new PasswordAuthenticationMethod(config.SshCredentials.User, config.SshCredentials.Pass);
+    var sshClient = new SshClient(new ConnectionInfo(config.SshCredentials.Host, config.SshCredentials.Port, config.SshCredentials.User, credentials));
     sshClient.Connect();
     return sshClient;
   }
@@ -123,10 +133,7 @@ class BackupAppDataConfig
 {
   public List<string> Folders { get; set; } = new();
   public string BackupDestRoot { get; set; } = string.Empty;
-  public string SshHost { get; set; } = string.Empty;
-  public int SshPort { get; set; } = 22;
-  public string SshUser { get; set; } = string.Empty;
-  public string SshPass { get; set; } = string.Empty;
+  public SshCredentials SshCredentials { get; set; } = new();
 
   public bool IsValid()
   {
@@ -136,13 +143,7 @@ class BackupAppDataConfig
     if (Folders.Count == 0)
       return false;
 
-    if (string.IsNullOrWhiteSpace(SshHost))
-      return false;
-
-    if (string.IsNullOrWhiteSpace(SshUser))
-      return false;
-
-    if (string.IsNullOrWhiteSpace(SshPass))
+    if (!SshCredentials.IsValid())
       return false;
 
     return true;

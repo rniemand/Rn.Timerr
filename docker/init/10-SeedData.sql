@@ -54,7 +54,7 @@ VALUES
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('VerifyMariaDbBackups', 'Dev', 1);
 
 -- ===============================================================================================================================
--- VerifyMariaDbBackups
+-- BackupAppData
 -- ===============================================================================================================================
 INSERT INTO `Config`
 	(`Category`,`Key`, `Collection`,`Host`,`Type`,`Value`)
@@ -71,9 +71,6 @@ VALUES
 	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/rn-go'),
 	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/rn-timerr'),
 	('BackupAppData', 'directory',      1, 'Dev', 'string',  '/mnt/user/Backups/app-data/teletgraf'),
-	('BackupAppData', 'ssh.host',       0, 'Dev', 'string',  '127.0.0.1'),
-	('BackupAppData', 'ssh.port',       0, 'Dev', 'int',     '22'),
-	('BackupAppData', 'ssh.user',       0, 'Dev', 'string',  'username'),
-	('BackupAppData', 'ssh.pass',       0, 'Dev', 'string',  'password');
+	('BackupAppData', 'ssh.creds',      0, 'Dev', 'string',  'SshNas');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupAppData', 'Dev', 1);
