@@ -60,8 +60,6 @@ class BackupAppData : IRunnableJob
     }
 
     ScheduleNextRunTime(options);
-    await Task.CompletedTask;
-
     return jobOutcome.AsSucceeded();
   }
 

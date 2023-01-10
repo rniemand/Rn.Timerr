@@ -34,10 +34,7 @@ INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupSonarQube', 'De
 INSERT INTO `Config`
 	(`Category`,`Key`,`Host`,`Type`,`Value`)
 VALUES
-	('BackupObsidian', 'ssh.host', 'Dev', 'string',  '127.0.0.1'),
-	('BackupObsidian', 'ssh.port', 'Dev', 'int',     '22'),
-	('BackupObsidian', 'ssh.user', 'Dev', 'string',  'username'),
-	('BackupObsidian', 'ssh.pass', 'Dev', 'string',  'password');
+	('BackupObsidian', 'ssh.creds', 'Dev', 'string',  'SshNas');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupObsidian', 'Dev', 1);
 

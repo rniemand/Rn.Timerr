@@ -2,6 +2,7 @@ using Renci.SshNet;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
+using Rn.Timerr.Services;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
@@ -12,11 +13,14 @@ internal class BackupObsidian : IRunnableJob
   public string ConfigKey => nameof(BackupObsidian);
 
   private readonly ILoggerAdapter<BackupObsidian> _logger;
+  private readonly ICredentialsService _credentialsService;
 
 
-  public BackupObsidian(ILoggerAdapter<BackupObsidian> logger)
+  public BackupObsidian(ILoggerAdapter<BackupObsidian> logger,
+    ICredentialsService credentialsService)
   {
     _logger = logger;
+    _credentialsService = credentialsService;
   }
 
 
@@ -37,16 +41,16 @@ internal class BackupObsidian : IRunnableJob
 
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    var config = MapConfiguration(options);
+    var config = await MapConfiguration(options);
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
 
     // Execute the backup commands
-    var client = GetSshClient(config);
-    RunSshCommand(client, "rm \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\"", false);
-    RunSshCommand(client, "zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
+    var sshClient = GetSshClient(config);
+    RunSshCommand(sshClient, "rm \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\"", false);
+    RunSshCommand(sshClient, "zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
 
     // Schedule the next run time
     ScheduleNextRunTime(options);
@@ -57,19 +61,25 @@ internal class BackupObsidian : IRunnableJob
 
 
   // Internal methods
-  private static BackupObsidianConfig MapConfiguration(RunningJobOptions options) =>
-    new()
+  private async Task<BackupObsidianConfig> MapConfiguration(RunningJobOptions options)
+  {
+    var credentialsName = options.Config.GetStringValue("ssh.creds");
+    if (string.IsNullOrWhiteSpace(credentialsName))
     {
-      SshHost = options.Config.GetStringValue("ssh.host"),
-      SshPort = options.Config.GetIntValue("ssh.port", 22),
-      SshUser = options.Config.GetStringValue("ssh.user"),
-      SshPass = options.Config.GetStringValue("ssh.pass")
+      _logger.LogError("Missing required config value: {name}", "ssh.creds");
+      return new BackupObsidianConfig();
+    }
+
+    return new BackupObsidianConfig
+    {
+      SshCredentials = await _credentialsService.GetSshCredentials(credentialsName)
     };
+  }
 
   private static SshClient GetSshClient(BackupObsidianConfig config)
   {
-    var credentials = new PasswordAuthenticationMethod(config.SshUser, config.SshPass);
-    var sshClient = new SshClient(new ConnectionInfo(config.SshHost, config.SshPort, config.SshUser, credentials));
+    var credentials = new PasswordAuthenticationMethod(config.SshCredentials.User, config.SshCredentials.Pass);
+    var sshClient = new SshClient(new ConnectionInfo(config.SshCredentials.Host, config.SshCredentials.Port, config.SshCredentials.User, credentials));
     sshClient.Connect();
     return sshClient;
   }
@@ -97,22 +107,10 @@ internal class BackupObsidian : IRunnableJob
 
 class BackupObsidianConfig
 {
-  public string SshHost { get; set; } = string.Empty;
-  public int SshPort { get; set; } = 22;
-  public string SshUser { get; set; } = string.Empty;
-  public string SshPass { get; set; } = string.Empty;
+  public SshCredentials SshCredentials { get; set; } = new();
 
   public bool IsValid()
   {
-    if (string.IsNullOrWhiteSpace(SshHost))
-      return false;
-
-    if (string.IsNullOrWhiteSpace(SshUser))
-      return false;
-
-    if (string.IsNullOrWhiteSpace(SshPass))
-      return false;
-
-    return true;
+    return SshCredentials.IsValid();
   }
 }
