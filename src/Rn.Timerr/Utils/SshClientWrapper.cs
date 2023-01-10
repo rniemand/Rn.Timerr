@@ -1,4 +1,4 @@
-using Renci.SshNet;
+﻿using Renci.SshNet;
 using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 using RnCore.Logging;
@@ -7,7 +7,7 @@ namespace Rn.Timerr.Utils;
 
 interface ISshClientWrapper
 {
-  void RunSshCommand(string commandText, bool throwOnError = true);
+  void RunCommand(string commandText, bool throwOnError = true);
 }
 
 class SshClientWrapper : ISshClientWrapper
@@ -39,7 +39,7 @@ class SshClientWrapper : ISshClientWrapper
 
 
   // Interface methods
-  public void RunSshCommand(string commandText, bool throwOnError = true)
+  public void RunCommand(string commandText, bool throwOnError = true)
   {
     if (_client is null || !_client.IsConnected)
       return;

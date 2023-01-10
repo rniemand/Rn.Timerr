@@ -79,11 +79,11 @@ internal class BackupSonarQube : IRunnableJob
   {
     var sshClient = await _sshClientFactory.GetSshClient(config.SshConnectionName);
 
-    sshClient.RunSshCommand("chmod 0777 /mnt/user/appdata/sql-server/data/SonarQube.bak");
-    sshClient.RunSshCommand("mv /mnt/user/appdata/sql-server/data/SonarQube.bak /mnt/user/Backups/db-mssql/SonarQube.bak");
-    sshClient.RunSshCommand("rm \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\"", false);
-    sshClient.RunSshCommand("zip -r \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\" \"/mnt/user/Backups/db-mssql/SonarQube.bak\"");
-    sshClient.RunSshCommand("rm /mnt/user/Backups/db-mssql/SonarQube.bak");
+    sshClient.RunCommand("chmod 0777 /mnt/user/appdata/sql-server/data/SonarQube.bak");
+    sshClient.RunCommand("mv /mnt/user/appdata/sql-server/data/SonarQube.bak /mnt/user/Backups/db-mssql/SonarQube.bak");
+    sshClient.RunCommand("rm \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\"", false);
+    sshClient.RunCommand("zip -r \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\" \"/mnt/user/Backups/db-mssql/SonarQube.bak\"");
+    sshClient.RunCommand("rm /mnt/user/Backups/db-mssql/SonarQube.bak");
   }
 
   private void ScheduleNextRunTime(RunningJobOptions options)

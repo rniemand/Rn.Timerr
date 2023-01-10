@@ -50,10 +50,10 @@ class BackupAppData : IRunnableJob
       var directory = Path.GetFileName(folder);
       var destPath = GenerateBackupDestPath(config, directory);
 
-      sshClient.RunSshCommand($"mkdir -p \"{destPath}\"");
-      sshClient.RunSshCommand($"rm \"{destPath}$(date '+%F')-{directory}.zip\"", false);
-      sshClient.RunSshCommand($"zip -r \"{destPath}$(date '+%F')-{directory}.zip\" \"{folder}\"");
-      sshClient.RunSshCommand($"chmod 0777 \"{destPath}$(date '+%F')-{directory}.zip\"");
+      sshClient.RunCommand($"mkdir -p \"{destPath}\"");
+      sshClient.RunCommand($"rm \"{destPath}$(date '+%F')-{directory}.zip\"", false);
+      sshClient.RunCommand($"zip -r \"{destPath}$(date '+%F')-{directory}.zip\" \"{folder}\"");
+      sshClient.RunCommand($"chmod 0777 \"{destPath}$(date '+%F')-{directory}.zip\"");
     }
 
     ScheduleNextRunTime(options);

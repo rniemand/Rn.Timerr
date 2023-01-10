@@ -44,8 +44,8 @@ internal class BackupObsidian : IRunnableJob
 
     // Execute the backup commands
     var sshClient = await _sshClientFactory.GetSshClient(config.SshCredentials);
-    sshClient.RunSshCommand("rm \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\"", false);
-    sshClient.RunSshCommand("zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
+    sshClient.RunCommand("rm \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\"", false);
+    sshClient.RunCommand("zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
 
     // Schedule the next run time
     ScheduleNextRunTime(options);
