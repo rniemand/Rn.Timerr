@@ -17,12 +17,10 @@ class BackupAppData : IRunnableJob
     _sshClientFactory = sshClientFactory;
   }
 
-
-  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
-    var config = RunningJobUtils.MapConfiguration<BackupAppDataConfig>(options);
+    var config = RunningJobUtils.MapConfiguration<Config>(options);
 
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
@@ -46,7 +44,7 @@ class BackupAppData : IRunnableJob
 
 
   // Internal methods
-  private static string GenerateBackupDestPath(BackupAppDataConfig config, string directory)
+  private static string GenerateBackupDestPath(Config config, string directory)
   {
     var generated = Path.Join(config.BackupDestRoot, directory)
       .Replace("\\", "/");
@@ -56,30 +54,32 @@ class BackupAppData : IRunnableJob
 
     return generated;
   }
-}
 
-class BackupAppDataConfig
-{
-  [JobDbConfig("directory", JobDbConfigType.StringArray)]
-  public List<string> Folders { get; set; } = new();
 
-  [JobDbConfig("backupDestRoot")]
-  public string BackupDestRoot { get; set; } = string.Empty;
-
-  [JobDbConfig("ssh.creds")]
-  public string SshCredsName { get; set; } = string.Empty;
-
-  public bool IsValid()
+  // Supporting Classes
+  class Config
   {
-    if (string.IsNullOrWhiteSpace(BackupDestRoot))
-      return false;
+    [JobDbConfig("directory", JobDbConfigType.StringArray)]
+    public List<string> Folders { get; set; } = new();
 
-    if (string.IsNullOrWhiteSpace(SshCredsName))
-      return false;
+    [JobDbConfig("backupDestRoot")]
+    public string BackupDestRoot { get; set; } = string.Empty;
 
-    if (Folders.Count == 0)
-      return false;
+    [JobDbConfig("ssh.creds")]
+    public string SshCredsName { get; set; } = string.Empty;
 
-    return true;
+    public bool IsValid()
+    {
+      if (string.IsNullOrWhiteSpace(BackupDestRoot))
+        return false;
+
+      if (string.IsNullOrWhiteSpace(SshCredsName))
+        return false;
+
+      if (Folders.Count == 0)
+        return false;
+
+      return true;
+    }
   }
 }

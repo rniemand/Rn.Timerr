@@ -30,13 +30,15 @@ class BackupSatisfactory : IRunnableJob
     _path = path;
   }
 
-  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    var config = RunningJobUtils.MapConfiguration<BackupSatisfactoryConfig>(options);
+    var config = RunningJobUtils.MapConfiguration<Config>(options);
     if (!config.BackupFileName.EndsWith(".zip"))
       config.BackupFileName += ".zip";
-    
+
+    if (!config.IsValid())
+      return new RunningJobResult().WithError("Missing required configuration");
+
     if (!ValidateDestinations(config))
       return new RunningJobResult(JobOutcome.Failed);
 
@@ -46,7 +48,7 @@ class BackupSatisfactory : IRunnableJob
 
 
   // Game backup methods
-  private RunningJobResult BackupGameFiles(RunningJobOptions options, BackupSatisfactoryConfig config)
+  private RunningJobResult BackupGameFiles(RunningJobOptions options, Config config)
   {
     ManageGameSaves(config);
 
@@ -71,7 +73,7 @@ class BackupSatisfactory : IRunnableJob
     return new RunningJobResult(JobOutcome.Succeeded);
   }
 
-  private void ManageGameSaves(BackupSatisfactoryConfig config)
+  private void ManageGameSaves(Config config)
   {
     if (!config.ManageSaves)
       return;
@@ -122,7 +124,7 @@ class BackupSatisfactory : IRunnableJob
 
   private static DateTime ToStartOfDay(DateTime date) => new(date.Year, date.Month, date.Day);
 
-  private List<FileInfo> GetManageableFiles(BackupSatisfactoryConfig config)
+  private List<FileInfo> GetManageableFiles(Config config)
   {
     var filteredFiles = new List<string>();
 
@@ -157,7 +159,7 @@ class BackupSatisfactory : IRunnableJob
       throw new RnTimerrException($"Unable to create directory: {path}");
   }
 
-  private bool ValidateDestinations(BackupSatisfactoryConfig config)
+  private bool ValidateDestinations(Config config)
   {
     if (!_directory.Exists(config.SourcePath))
     {
@@ -177,49 +179,51 @@ class BackupSatisfactory : IRunnableJob
     return true;
   }
 
-  private string GenerateFileName(RunningJobOptions runningJobConfig, BackupSatisfactoryConfig config) => config.BackupFileName
+  private string GenerateFileName(RunningJobOptions runningJobConfig, Config config) => config.BackupFileName
     .Replace("{yyyy}", runningJobConfig.JobStartTime.Year.ToString("D"))
     .Replace("{mm}", runningJobConfig.JobStartTime.Month.ToString("D").PadLeft(2, '0'))
     .Replace("{dd}", runningJobConfig.JobStartTime.Day.ToString("D").PadLeft(2, '0'))
     .Replace("{hh}", runningJobConfig.JobStartTime.Hour.ToString("D").PadLeft(2, '0'))
     .Replace("{mm}", runningJobConfig.JobStartTime.Minute.ToString("D").PadLeft(2, '0'))
     .Replace("{ss}", runningJobConfig.JobStartTime.Second.ToString("D").PadLeft(2, '0'));
-}
 
-class BackupSatisfactoryConfig
-{
-  [JobDbConfig("Source", ThrowIfMissing = true)]
-  public string SourcePath { get; set; } = string.Empty;
 
-  [JobDbConfig("Destination", ThrowIfMissing = true)]
-  public string Destination { get; set; } = string.Empty;
-
-  [JobDbConfig("BackupFileName", ThrowIfMissing = true)]
-  public string BackupFileName { get; set; } = string.Empty;
-
-  [JobDbConfig("TickIntervalMin", JobDbConfigType.Int, IntFallback = 10)]
-  public int TickIntervalMin { get; set; } = 10;
-
-  [JobDbConfig("OverwriteExisting", JobDbConfigType.Bool)]
-  public bool OverwriteExisting { get; set; }
-
-  [JobDbConfig("ManageSaves", JobDbConfigType.Bool)]
-  public bool ManageSaves { get; set; }
-
-  [JobDbConfig("ManageSaveRx", JobDbConfigType.Regex, RegexOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-  public Regex ManageSavesRx { get; set; } = new(".*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-  public bool IsValid()
+  // Supporting classes
+  class Config
   {
-    if (string.IsNullOrWhiteSpace(SourcePath))
-      return false;
+    [JobDbConfig("Source", ThrowIfMissing = true)]
+    public string SourcePath { get; set; } = string.Empty;
 
-    if (string.IsNullOrWhiteSpace(Destination))
-      return false;
+    [JobDbConfig("Destination", ThrowIfMissing = true)]
+    public string Destination { get; set; } = string.Empty;
 
-    if (string.IsNullOrWhiteSpace(BackupFileName))
-      return false;
+    [JobDbConfig("BackupFileName", ThrowIfMissing = true)]
+    public string BackupFileName { get; set; } = string.Empty;
 
-    return true;
+    [JobDbConfig("TickIntervalMin", JobDbConfigType.Int, IntFallback = 10)]
+    public int TickIntervalMin { get; set; } = 10;
+
+    [JobDbConfig("OverwriteExisting", JobDbConfigType.Bool)]
+    public bool OverwriteExisting { get; set; }
+
+    [JobDbConfig("ManageSaves", JobDbConfigType.Bool)]
+    public bool ManageSaves { get; set; }
+
+    [JobDbConfig("ManageSaveRx", JobDbConfigType.Regex, RegexOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    public Regex ManageSavesRx { get; set; } = new(".*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    public bool IsValid()
+    {
+      if (string.IsNullOrWhiteSpace(SourcePath))
+        return false;
+
+      if (string.IsNullOrWhiteSpace(Destination))
+        return false;
+
+      if (string.IsNullOrWhiteSpace(BackupFileName))
+        return false;
+
+      return true;
+    }
   }
 }

@@ -30,13 +30,11 @@ class VerifyMariaDbBackups : IRunnableJob
     _mailUtilsFactory = mailUtilsFactory;
   }
 
-
-  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);
 
-    var config = RunningJobUtils.MapConfiguration<VerifyMariaDbBackupsConfig>(options);
+    var config = RunningJobUtils.MapConfiguration<Config>(options);
     if (!config.IsValid())
       return outcome.WithError("Missing required configuration");
 
@@ -69,14 +67,14 @@ class VerifyMariaDbBackups : IRunnableJob
 
 
   // Internal methods
-  private static DbBackupVerifyConfig GetDbCheckConfig(VerifyMariaDbBackupsConfig config)
+  private static JsonConfig GetDbCheckConfig(Config config)
   {
     // TODO: [ABSTRACT] (VerifyMariaDbBackups.GetDbCheckConfig) Use abstraction for this
     if (!File.Exists(config.ConfigFile))
-      return new DbBackupVerifyConfig();
+      return new JsonConfig();
 
     var rawJson = File.ReadAllText(config.ConfigFile);
-    var parsedConfig = JsonConvert.DeserializeObject<DbBackupVerifyConfig>(rawJson);
+    var parsedConfig = JsonConvert.DeserializeObject<JsonConfig>(rawJson);
 
     foreach (var rule in parsedConfig!.Rules)
     {
@@ -87,7 +85,7 @@ class VerifyMariaDbBackups : IRunnableJob
     return parsedConfig;
   }
 
-  private async Task SendFileNotFoundEmail(DbBackupVerifyConfig config, DbBackupVerifyConfig.CheckRule rule)
+  private async Task SendFileNotFoundEmail(JsonConfig config, JsonConfig.CheckRule rule)
   {
     _logger.LogWarning("Sending 'DB Backup Missing' mail for: {name}", rule.Name);
     var smtpClient = _mailUtilsFactory.CreateSmtpClient();
@@ -104,7 +102,7 @@ class VerifyMariaDbBackups : IRunnableJob
       .Build());
   }
 
-  private async Task SendBackupFileSizeTooSmallEmail(DbBackupVerifyConfig config, DbBackupVerifyConfig.CheckRule rule, FileInfo fi)
+  private async Task SendBackupFileSizeTooSmallEmail(JsonConfig config, JsonConfig.CheckRule rule, FileInfo fi)
   {
     _logger.LogWarning("Sending 'DB Backup Too Small' mail for: {name}", rule.Name);
     var smtpClient = _mailUtilsFactory.CreateSmtpClient();
@@ -123,7 +121,7 @@ class VerifyMariaDbBackups : IRunnableJob
       .Build());
   }
 
-  private async Task SendCheckCompleteEmail(DbBackupVerifyConfig config)
+  private async Task SendCheckCompleteEmail(JsonConfig config)
   {
     _logger.LogInformation("Sending check completed email");
     var smtpClient = _mailUtilsFactory.CreateSmtpClient();
@@ -138,57 +136,59 @@ class VerifyMariaDbBackups : IRunnableJob
         .Process())
       .Build());
   }
-}
 
-class VerifyMariaDbBackupsConfig
-{
-  [JobDbConfig("configFile")]
-  public string ConfigFile { get; set; } = string.Empty;
 
-  [JobDbConfig("NextRunTemplate")]
-  public string NextRunTemplate { get; set; } = string.Empty;
-
-  public bool IsValid()
+  // Supporting classes
+  class Config
   {
-    if (string.IsNullOrWhiteSpace(ConfigFile))
-      return false;
+    [JobDbConfig("configFile")]
+    public string ConfigFile { get; set; } = string.Empty;
 
-    if (string.IsNullOrWhiteSpace(NextRunTemplate))
-      return false;
+    [JobDbConfig("NextRunTemplate")]
+    public string NextRunTemplate { get; set; } = string.Empty;
 
-    return true;
-  }
-}
+    public bool IsValid()
+    {
+      if (string.IsNullOrWhiteSpace(ConfigFile))
+        return false;
 
-class DbBackupVerifyConfig
-{
-  [JsonProperty("Mail")]
-  public MailSettings MailConfig { get; set; } = new MailSettings();
+      if (string.IsNullOrWhiteSpace(NextRunTemplate))
+        return false;
 
-  [JsonProperty("Rules")]
-  public CheckRule[] Rules { get; set; } = Array.Empty<CheckRule>();
-
-  public class CheckRule
-  {
-    [JsonProperty("Path")]
-    public string FilePath { get; set; } = string.Empty;
-
-    [JsonProperty("MinSizeKB")]
-    public int MinFileSizeKb { get; set; }
-
-    [JsonIgnore]
-    public long MinFileSizeBytes { get; set; }
-
-    [JsonProperty("Name")]
-    public string Name { get; set; } = string.Empty;
+      return true;
+    }
   }
 
-  public class MailSettings
+  class JsonConfig
   {
-    [JsonProperty("ToAddress")]
-    public string ToAddress { get; set; } = string.Empty;
+    [JsonProperty("Mail")]
+    public MailSettings MailConfig { get; set; } = new MailSettings();
 
-    [JsonProperty("ToName")]
-    public string ToName { get; set; } = string.Empty;
+    [JsonProperty("Rules")]
+    public CheckRule[] Rules { get; set; } = Array.Empty<CheckRule>();
+
+    public class CheckRule
+    {
+      [JsonProperty("Path")]
+      public string FilePath { get; set; } = string.Empty;
+
+      [JsonProperty("MinSizeKB")]
+      public int MinFileSizeKb { get; set; }
+
+      [JsonIgnore]
+      public long MinFileSizeBytes { get; set; }
+
+      [JsonProperty("Name")]
+      public string Name { get; set; } = string.Empty;
+    }
+
+    public class MailSettings
+    {
+      [JsonProperty("ToAddress")]
+      public string ToAddress { get; set; } = string.Empty;
+
+      [JsonProperty("ToName")]
+      public string ToName { get; set; } = string.Empty;
+    }
   }
 }

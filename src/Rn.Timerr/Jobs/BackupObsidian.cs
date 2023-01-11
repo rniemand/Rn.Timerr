@@ -17,12 +17,11 @@ internal class BackupObsidian : IRunnableJob
     _sshClientFactory = sshClientFactory;
   }
 
-  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
-    var config = RunningJobUtils.MapConfiguration<BackupObsidianConfig>(options);
+    var config = RunningJobUtils.MapConfiguration<Config>(options);
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
 
@@ -35,12 +34,13 @@ internal class BackupObsidian : IRunnableJob
     options.ScheduleNextRunInXHours(12);
     return jobOutcome.AsSucceeded();
   }
-}
 
-class BackupObsidianConfig
-{
-  [JobDbConfig("ssh.creds")]
-  public string SshCredentials { get; set; } = string.Empty;
+  // Supporting classes
+  class Config
+  {
+    [JobDbConfig("ssh.creds")]
+    public string SshCredentials { get; set; } = string.Empty;
 
-  public bool IsValid() => !string.IsNullOrWhiteSpace(SshCredentials);
+    public bool IsValid() => !string.IsNullOrWhiteSpace(SshCredentials);
+  }
 }
