@@ -8,7 +8,6 @@ class JobDbConfigAttribute : Attribute
 {
   public string PropertyName { get; set; }
   public JobDbConfigType ConfigType { get; set; } = JobDbConfigType.String;
-  public bool ThrowIfMissing { get; set; }
   public int IntFallback { get; set; }
   public bool BoolFallback { get; set; }
   public RegexOptions RegexOptions { get; set; } = RegexOptions.None;

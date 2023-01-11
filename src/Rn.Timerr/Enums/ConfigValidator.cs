@@ -2,5 +2,7 @@ namespace Rn.Timerr.Enums;
 
 enum ConfigValidator
 {
-  String
+  String,
+  StringArray,
+  Int
 }

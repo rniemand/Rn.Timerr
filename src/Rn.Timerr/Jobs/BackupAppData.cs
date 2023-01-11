@@ -21,13 +21,15 @@ class BackupAppData : IRunnableJob
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
+
+    // Map and validate the job configuration
     var config = RunningJobUtils.MapConfiguration<Config>(options);
+    var validationOutcome = RunningJobUtils.ValidateConfig(config);
+    if (!validationOutcome.Success)
+      return jobOutcome.WithError(validationOutcome.ValidationError);
 
-    if (!config.IsValid())
-      return jobOutcome.WithError("Missing required configuration");
-
+    // Run job logic...
     var sshClient = await _sshClientFactory.GetSshClient(config.SshCredsName);
-
     foreach (var folder in config.Folders)
     {
       var directory = Path.GetFileName(folder);
@@ -39,6 +41,7 @@ class BackupAppData : IRunnableJob
       sshClient.RunCommand($"chmod 0777 \"{destPath}$(date '+%F')-{directory}.zip\"");
     }
 
+    // Reschedule job and return outcome
     options.ScheduleNextRunUsingTemplate(DateTime.Now.AddDays(1), "yyyy-MM-ddT08:20:00.0000000-07:00");
     return jobOutcome.AsSucceeded();
   }
@@ -61,26 +64,15 @@ class BackupAppData : IRunnableJob
   class Config
   {
     [JobDbConfig("directory", JobDbConfigType.StringArray)]
-    public List<string> Folders { get; set; } = new();
+    [StringArrayValidator(1)]
+    public string[] Folders { get; set; } = Array.Empty<string>();
 
     [JobDbConfig("backupDestRoot")]
+    [StringValidator]
     public string BackupDestRoot { get; set; } = string.Empty;
 
     [JobDbConfig("ssh.creds")]
+    [StringValidator]
     public string SshCredsName { get; set; } = string.Empty;
-
-    public bool IsValid()
-    {
-      if (string.IsNullOrWhiteSpace(BackupDestRoot))
-        return false;
-
-      if (string.IsNullOrWhiteSpace(SshCredsName))
-        return false;
-
-      if (Folders.Count == 0)
-        return false;
-
-      return true;
-    }
   }
 }

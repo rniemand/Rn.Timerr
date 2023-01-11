@@ -35,9 +35,11 @@ class VerifyMariaDbBackups : IRunnableJob
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);
 
+    // Map and validate the jobs configuration
     var config = RunningJobUtils.MapConfiguration<Config>(options);
-    if (!config.IsValid())
-      return outcome.WithError("Missing required configuration");
+    var validationOutcome = RunningJobUtils.ValidateConfig(config);
+    if (!validationOutcome.Success)
+      return outcome.WithError(validationOutcome.ValidationError);
 
     var checkConfig = GetDbCheckConfig(config);
     if (checkConfig.Rules.Length == 0)
@@ -143,21 +145,12 @@ class VerifyMariaDbBackups : IRunnableJob
   class Config
   {
     [JobDbConfig("configFile")]
+    [StringValidator]
     public string ConfigFile { get; set; } = string.Empty;
 
     [JobDbConfig("NextRunTemplate")]
+    [StringValidator]
     public string NextRunTemplate { get; set; } = string.Empty;
-
-    public bool IsValid()
-    {
-      if (string.IsNullOrWhiteSpace(ConfigFile))
-        return false;
-
-      if (string.IsNullOrWhiteSpace(NextRunTemplate))
-        return false;
-
-      return true;
-    }
   }
 
   class JsonConfig

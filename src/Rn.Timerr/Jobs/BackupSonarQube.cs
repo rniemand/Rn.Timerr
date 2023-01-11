@@ -21,9 +21,7 @@ internal class BackupSonarQube : IRunnableJob
     _logger = logger;
     _sshClientFactory = sshClientFactory;
   }
-
-
-  // Interface methods
+  
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);
@@ -75,10 +73,10 @@ internal class BackupSonarQube : IRunnableJob
 class BackupSonarQubeConfig
 {
   [JobDbConfig("SqlConnection")]
-  [JobConfigValidator(ConfigValidator.String, true)]
+  [StringValidator]
   public string SqlConnectionString { get; set; } = string.Empty;
 
   [JobDbConfig("ssh.creds")]
-  [JobConfigValidator(ConfigValidator.String, true)]
+  [StringValidator]
   public string SshConnectionName { get; set; } = string.Empty;
 }

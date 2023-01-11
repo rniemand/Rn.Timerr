@@ -1,9 +1,7 @@
 using System.Reflection;
-using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Rn.Timerr.Attributes;
 using Rn.Timerr.Enums;
-using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 
 namespace Rn.Timerr.Utils;
@@ -40,7 +38,6 @@ static class RunningJobUtils
         continue;
 
       MapObjectValue(attribute, @class, propertyInfo, options);
-      HandleThrowIfMissing(attribute, @class, propertyInfo);
     }
 
     return @class;
@@ -49,7 +46,8 @@ static class RunningJobUtils
   public static ValidationOutcome ValidateConfig(object jobConfig)
   {
     var outcome = new ValidationOutcome();
-    var attributeType = typeof(JobConfigValidatorAttribute);
+    var attributeType = typeof(ConfigValidatorAttribute);
+
     var propertyInfos = jobConfig.GetType()
       .GetProperties()
       .Where(p => p.CustomAttributes.Any())
@@ -58,22 +56,13 @@ static class RunningJobUtils
 
     foreach (var propertyInfo in propertyInfos)
     {
-      if (Attribute.GetCustomAttribute(propertyInfo, attributeType) is not JobConfigValidatorAttribute attribute)
+      if (Attribute.GetCustomAttribute(propertyInfo, attributeType) is not ConfigValidatorAttribute attribute)
         continue;
 
-      var rawValue = propertyInfo.GetValue(jobConfig);
-      var propName = propertyInfo.Name;
-
-      if (attribute.Validator == ConfigValidator.String)
-      {
-        if (RunStringValidator(attribute, propName, rawValue, outcome))
-          continue;
+      if (!attribute.Validate(propertyInfo.Name, propertyInfo.GetValue(jobConfig), outcome))
         return outcome;
-      }
-
-      throw new ArgumentOutOfRangeException();
     }
-    
+
     return outcome;
   }
 
@@ -87,7 +76,7 @@ static class RunningJobUtils
         return;
 
       case JobDbConfigType.StringArray:
-        propertyInfo.SetValue(instance, options.Config.GetStringCollection(attribute.PropertyName));
+        propertyInfo.SetValue(instance, options.Config.GetStringCollection(attribute.PropertyName).ToArray());
         return;
 
       case JobDbConfigType.Int:
@@ -109,51 +98,5 @@ static class RunningJobUtils
       default:
         throw new ArgumentOutOfRangeException();
     }
-  }
-
-  private static void HandleThrowIfMissing<TClass>(JobDbConfigAttribute attribute, TClass instance, PropertyInfo propertyInfo)
-  {
-    if (!attribute.ThrowIfMissing)
-      return;
-
-    var instanceValue = propertyInfo.GetValue(instance);
-
-    if (attribute.ConfigType == JobDbConfigType.String)
-    {
-      if (string.IsNullOrWhiteSpace(instanceValue as string))
-        throw new RnTimerrException($"Missing configuration for: {attribute.PropertyName}");
-      return;
-    }
-
-    throw new ArgumentOutOfRangeException();
-  }
-
-  private static bool RunStringValidator(JobConfigValidatorAttribute attribute, string propName, object? rawValue, ValidationOutcome outcome)
-  {
-    // Handle NULL values
-    if (rawValue is null)
-    {
-      if (!attribute.Required) return true;
-      outcome.WithError($"'{propName}' is required and cannot be NULL");
-      return false;
-    }
-
-    // Handle values of the wrong type
-    if (rawValue is not string strValue)
-    {
-      var propType = rawValue.GetType().Name;
-      outcome.WithError($"'{propName}' is of type '{propType}' and cannot be validated as a STRING");
-      return false;
-    }
-
-    // Validate a string value
-    if (string.IsNullOrWhiteSpace(strValue))
-    {
-      if (!attribute.Required) return true;
-      outcome.WithError($"'{propName}' is required and cannot be EMPTY or WHITE_SPACE");
-      return false;
-    }
-
-    return true;
   }
 }

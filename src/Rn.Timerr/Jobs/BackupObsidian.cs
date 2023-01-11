@@ -23,8 +23,9 @@ internal class BackupObsidian : IRunnableJob
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
     var config = RunningJobUtils.MapConfiguration<Config>(options);
-    if (!config.IsValid())
-      return jobOutcome.WithError("Missing required configuration");
+    var validationOutcome = RunningJobUtils.ValidateConfig(config);
+    if (!validationOutcome.Success)
+      return jobOutcome.WithError(validationOutcome.ValidationError);
 
     // Execute the backup commands
     var sshClient = await _sshClientFactory.GetSshClient(config.SshCredentials);
@@ -40,8 +41,7 @@ internal class BackupObsidian : IRunnableJob
   class Config
   {
     [JobDbConfig("ssh.creds")]
+    [StringValidator]
     public string SshCredentials { get; set; } = string.Empty;
-
-    public bool IsValid() => !string.IsNullOrWhiteSpace(SshCredentials);
   }
 }

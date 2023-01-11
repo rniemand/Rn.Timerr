@@ -37,8 +37,10 @@ class BackupSatisfactory : IRunnableJob
     if (!config.BackupFileName.EndsWith(".zip"))
       config.BackupFileName += ".zip";
 
-    if (!config.IsValid())
-      return new RunningJobResult().WithError("Missing required configuration");
+    // Validate configuration
+    var validationOutcome = RunningJobUtils.ValidateConfig(config);
+    if (!validationOutcome.Success)
+      return new RunningJobResult().WithError(validationOutcome.ValidationError);
 
     if (!ValidateDestinations(config))
       return new RunningJobResult(JobOutcome.Failed);
@@ -192,16 +194,20 @@ class BackupSatisfactory : IRunnableJob
   // Supporting classes
   class Config
   {
-    [JobDbConfig("Source", ThrowIfMissing = true)]
+    [JobDbConfig("Source")]
+    [StringValidator]
     public string SourcePath { get; set; } = string.Empty;
 
-    [JobDbConfig("Destination", ThrowIfMissing = true)]
+    [JobDbConfig("Destination")]
+    [StringValidator]
     public string Destination { get; set; } = string.Empty;
 
-    [JobDbConfig("BackupFileName", ThrowIfMissing = true)]
+    [JobDbConfig("BackupFileName")]
+    [StringValidator]
     public string BackupFileName { get; set; } = string.Empty;
 
     [JobDbConfig("TickIntervalMin", JobDbConfigType.Int, IntFallback = 10)]
+    [IntValidator(10)]
     public int TickIntervalMin { get; set; } = 10;
 
     [JobDbConfig("OverwriteExisting", JobDbConfigType.Bool)]
@@ -212,19 +218,5 @@ class BackupSatisfactory : IRunnableJob
 
     [JobDbConfig("ManageSaveRx", JobDbConfigType.Regex, RegexOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     public Regex ManageSavesRx { get; set; } = new(".*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    public bool IsValid()
-    {
-      if (string.IsNullOrWhiteSpace(SourcePath))
-        return false;
-
-      if (string.IsNullOrWhiteSpace(Destination))
-        return false;
-
-      if (string.IsNullOrWhiteSpace(BackupFileName))
-        return false;
-
-      return true;
-    }
   }
 }
