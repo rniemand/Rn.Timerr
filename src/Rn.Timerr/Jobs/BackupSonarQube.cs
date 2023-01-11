@@ -1,4 +1,5 @@
 using System.Data.SqlClient;
+using Rn.Timerr.Attributes;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
@@ -25,17 +26,21 @@ internal class BackupSonarQube : IRunnableJob
   // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
+    var outcome = new RunningJobResult(JobOutcome.Failed);
+
+    // Load configuration and run simple validation on it
     var config = RunningJobUtils.MapConfiguration<BackupSonarQubeConfig>(options);
-    var jobOutcome = new RunningJobResult(JobOutcome.Failed);
+    var configValidation = RunningJobUtils.ValidateConfig(config);
+    if (!configValidation.Success)
+      return outcome.WithError(configValidation.ValidationError);
 
-    if (!config.IsValid())
-      return jobOutcome.WithError("Missing required configuration");
-
+    // Run the backup process
     await CreateDbBackupAsync(config);
     await ProcessDbBackup(config);
     options.ScheduleNextRunUsingTemplate(DateTime.Now.AddDays(1), "yyyy-MM-ddT08:10:00.0000000-07:00");
 
-    return jobOutcome.AsSucceeded();
+    // Return the generated job outcome
+    return outcome.AsSucceeded();
   }
 
 
@@ -70,19 +75,10 @@ internal class BackupSonarQube : IRunnableJob
 class BackupSonarQubeConfig
 {
   [JobDbConfig("SqlConnection")]
+  [JobConfigValidator(ConfigValidator.String, true)]
   public string SqlConnectionString { get; set; } = string.Empty;
 
   [JobDbConfig("ssh.creds")]
+  [JobConfigValidator(ConfigValidator.String, true)]
   public string SshConnectionName { get; set; } = string.Empty;
-
-  public bool IsValid()
-  {
-    if (string.IsNullOrWhiteSpace(SqlConnectionString))
-      return false;
-
-    if (string.IsNullOrWhiteSpace(SshConnectionName))
-      return false;
-
-    return true;
-  }
 }

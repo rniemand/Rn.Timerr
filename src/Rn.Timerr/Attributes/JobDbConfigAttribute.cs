@@ -1,17 +1,9 @@
 using System.Text.RegularExpressions;
+using Rn.Timerr.Enums;
 
-namespace Rn.Timerr.Models;
+namespace Rn.Timerr.Attributes;
 
-enum JobDbConfigType
-{
-  String,
-  StringArray,
-  Int,
-  Bool,
-  Regex
-}
-
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Property)]
 class JobDbConfigAttribute : Attribute
 {
   public string PropertyName { get; set; }

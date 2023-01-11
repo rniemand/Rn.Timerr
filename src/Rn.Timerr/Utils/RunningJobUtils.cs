@@ -1,9 +1,25 @@
 using System.Reflection;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
+using Rn.Timerr.Attributes;
+using Rn.Timerr.Enums;
 using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 
 namespace Rn.Timerr.Utils;
+
+class ValidationOutcome
+{
+  public bool Success { get; set; } = true;
+  public string ValidationError { get; set; } = string.Empty;
+
+  public ValidationOutcome WithError(string error)
+  {
+    Success = false;
+    ValidationError = error;
+    return this;
+  }
+}
 
 static class RunningJobUtils
 {
@@ -28,6 +44,37 @@ static class RunningJobUtils
     }
 
     return @class;
+  }
+
+  public static ValidationOutcome ValidateConfig(object jobConfig)
+  {
+    var outcome = new ValidationOutcome();
+    var attributeType = typeof(JobConfigValidatorAttribute);
+    var propertyInfos = jobConfig.GetType()
+      .GetProperties()
+      .Where(p => p.CustomAttributes.Any())
+      .Where(p => p.CustomAttributes.Any(a => a.AttributeType == attributeType))
+      .ToList();
+
+    foreach (var propertyInfo in propertyInfos)
+    {
+      if (Attribute.GetCustomAttribute(propertyInfo, attributeType) is not JobConfigValidatorAttribute attribute)
+        continue;
+
+      var rawValue = propertyInfo.GetValue(jobConfig);
+      var propName = propertyInfo.Name;
+
+      if (attribute.Validator == ConfigValidator.String)
+      {
+        if (RunStringValidator(attribute, propName, rawValue, outcome))
+          continue;
+        return outcome;
+      }
+
+      throw new ArgumentOutOfRangeException();
+    }
+    
+    return outcome;
   }
 
   // Internal methods
@@ -79,5 +126,34 @@ static class RunningJobUtils
     }
 
     throw new ArgumentOutOfRangeException();
+  }
+
+  private static bool RunStringValidator(JobConfigValidatorAttribute attribute, string propName, object? rawValue, ValidationOutcome outcome)
+  {
+    // Handle NULL values
+    if (rawValue is null)
+    {
+      if (!attribute.Required) return true;
+      outcome.WithError($"'{propName}' is required and cannot be NULL");
+      return false;
+    }
+
+    // Handle values of the wrong type
+    if (rawValue is not string strValue)
+    {
+      var propType = rawValue.GetType().Name;
+      outcome.WithError($"'{propName}' is of type '{propType}' and cannot be validated as a STRING");
+      return false;
+    }
+
+    // Validate a string value
+    if (string.IsNullOrWhiteSpace(strValue))
+    {
+      if (!attribute.Required) return true;
+      outcome.WithError($"'{propName}' is required and cannot be EMPTY or WHITE_SPACE");
+      return false;
+    }
+
+    return true;
   }
 }

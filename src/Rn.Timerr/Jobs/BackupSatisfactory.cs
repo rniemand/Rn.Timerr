@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.RegularExpressions;
+using Rn.Timerr.Attributes;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
