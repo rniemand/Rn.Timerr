@@ -1,7 +1,6 @@
 using Rn.Timerr.Enums;
 using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
-using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
 
@@ -10,12 +9,10 @@ internal class BackupObsidian : IRunnableJob
   public string Name => nameof(BackupObsidian);
   public string ConfigKey => nameof(BackupObsidian);
 
-  private readonly ILoggerAdapter<BackupObsidian> _logger;
   private readonly ISshClientFactory _sshClientFactory;
 
-  public BackupObsidian(ILoggerAdapter<BackupObsidian> logger, ISshClientFactory sshClientFactory)
+  public BackupObsidian(ISshClientFactory sshClientFactory)
   {
-    _logger = logger;
     _sshClientFactory = sshClientFactory;
   }
 
@@ -34,9 +31,7 @@ internal class BackupObsidian : IRunnableJob
     sshClient.RunCommand("zip -r \"/mnt/user/Backups/Obsidian/$(date '+%F')-Obsidian.zip\" \"/mnt/user/Backups/_Obsidian/\"");
 
     // Schedule the next run time
-    ScheduleNextRunTime(options);
-    await Task.CompletedTask;
-
+    options.ScheduleNextRunInXHours(12);
     return jobOutcome.AsSucceeded();
   }
 
@@ -47,13 +42,6 @@ internal class BackupObsidian : IRunnableJob
     {
       SshCredentials = options.Config.GetStringValue("ssh.creds")
     };
-
-  private void ScheduleNextRunTime(RunningJobOptions options)
-  {
-    var nextRunTime = DateTimeOffset.Now.AddHours(12);
-    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
-    _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
-  }
 }
 
 class BackupObsidianConfig

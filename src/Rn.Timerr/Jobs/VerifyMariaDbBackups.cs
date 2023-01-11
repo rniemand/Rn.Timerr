@@ -61,7 +61,8 @@ class VerifyMariaDbBackups : IRunnableJob
     }
 
     await SendCheckCompleteEmail(checkConfig);
-    ScheduleNextRunTime(options, config);
+
+    options.ScheduleNextRunUsingTemplate(DateTime.Now.AddDays(1), config.NextRunTemplate);
     return outcome.AsSucceeded();
   }
 
@@ -141,18 +142,6 @@ class VerifyMariaDbBackups : IRunnableJob
         .AddPlaceHolder("rule.count", config.Rules.Length)
         .Process())
       .Build());
-  }
-
-  private void ScheduleNextRunTime(RunningJobOptions options, VerifyMariaDbBackupsConfig config)
-  {
-    var tomorrow = DateTime.Now.AddDays(1);
-    var nextRunTime = DateTimeOffset.Parse(config.NextRunTemplate
-      .Replace("yyyy", tomorrow.Year.ToString())
-      .Replace("MM", tomorrow.Month.ToString().PadLeft(2, '0'))
-      .Replace("dd", tomorrow.Day.ToString().PadLeft(2, '0')));
-
-    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
-    _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
 }
 

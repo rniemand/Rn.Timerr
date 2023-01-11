@@ -72,10 +72,7 @@ class BackupSatisfactory : IRunnableJob
     ZipFile.CreateFromDirectory(_sourcePath, fileName, CompressionLevel.Optimal, true);
     _logger.LogInformation("Completed: {path} ({size})", fileName, new FileInfo(fileName).Length);
 
-    var nextRunTime = DateTimeOffset.Now.AddMinutes(_tickIntervalMin);
-    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
-    _logger.LogDebug("Scheduled next tick for: {time}", nextRunTime);
-
+    options.ScheduleNextRunInXMinutes(_tickIntervalMin);
     return new RunningJobResult(JobOutcome.Succeeded);
   }
 

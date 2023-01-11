@@ -1,7 +1,6 @@
 using Rn.Timerr.Enums;
 using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
-using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
 
@@ -10,12 +9,10 @@ class BackupAppData : IRunnableJob
   public string Name => nameof(BackupAppData);
   public string ConfigKey => nameof(BackupAppData);
 
-  private readonly ILoggerAdapter<BackupAppData> _logger;
   private readonly ISshClientFactory _sshClientFactory;
 
-  public BackupAppData(ILoggerAdapter<BackupAppData> logger, ISshClientFactory sshClientFactory)
+  public BackupAppData(ISshClientFactory sshClientFactory)
   {
-    _logger = logger;
     _sshClientFactory = sshClientFactory;
   }
 
@@ -42,7 +39,7 @@ class BackupAppData : IRunnableJob
       sshClient.RunCommand($"chmod 0777 \"{destPath}$(date '+%F')-{directory}.zip\"");
     }
 
-    ScheduleNextRunTime(options);
+    options.ScheduleNextRunUsingTemplate(DateTime.Now.AddDays(1), "yyyy-MM-ddT08:20:00.0000000-07:00");
     return jobOutcome.AsSucceeded();
   }
 
@@ -65,18 +62,6 @@ class BackupAppData : IRunnableJob
       generated += "/";
 
     return generated;
-  }
-
-  private void ScheduleNextRunTime(RunningJobOptions options)
-  {
-    var tomorrow = DateTime.Now.AddDays(1);
-    var nextRunTime = DateTimeOffset.Parse("yyyy-MM-ddT08:20:00.0000000-07:00"
-      .Replace("yyyy", tomorrow.Year.ToString())
-      .Replace("MM", tomorrow.Month.ToString().PadLeft(2, '0'))
-      .Replace("dd", tomorrow.Day.ToString().PadLeft(2, '0')));
-
-    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
-    _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
 }
 

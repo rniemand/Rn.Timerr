@@ -32,7 +32,7 @@ internal class BackupSonarQube : IRunnableJob
 
     await CreateDbBackupAsync(config);
     await ProcessDbBackup(config);
-    ScheduleNextRunTime(options);
+    options.ScheduleNextRunUsingTemplate(DateTime.Now.AddDays(1), "yyyy-MM-ddT08:10:00.0000000-07:00");
 
     return jobOutcome.AsSucceeded();
   }
@@ -70,13 +70,6 @@ internal class BackupSonarQube : IRunnableJob
     sshClient.RunCommand("rm \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\"", false);
     sshClient.RunCommand("zip -r \"/mnt/user/Backups/db-mssql/$(date '+%F')-SonarQube.zip\" \"/mnt/user/Backups/db-mssql/SonarQube.bak\"");
     sshClient.RunCommand("rm /mnt/user/Backups/db-mssql/SonarQube.bak");
-  }
-
-  private void ScheduleNextRunTime(RunningJobOptions options)
-  {
-    var nextRunTime = DateTimeOffset.Now.AddHours(23);
-    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
-    _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
 }
 
