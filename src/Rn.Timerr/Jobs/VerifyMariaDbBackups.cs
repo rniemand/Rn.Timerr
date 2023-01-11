@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Models;
+using Rn.Timerr.Utils;
 using RnCore.Logging;
 using RnCore.Mailer.Builders;
 using RnCore.Mailer.Config;
@@ -35,7 +36,7 @@ class VerifyMariaDbBackups : IRunnableJob
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);
 
-    var config = MapConfig(options);
+    var config = RunningJobUtils.MapConfiguration<VerifyMariaDbBackupsConfig>(options);
     if (!config.IsValid())
       return outcome.WithError("Missing required configuration");
 
@@ -68,12 +69,6 @@ class VerifyMariaDbBackups : IRunnableJob
 
 
   // Internal methods
-  private static VerifyMariaDbBackupsConfig MapConfig(RunningJobOptions options) => new()
-  {
-    ConfigFile = options.Config.GetStringValue("configFile"),
-    NextRunTemplate = options.Config.GetStringValue("NextRunTemplate"),
-  };
-
   private static DbBackupVerifyConfig GetDbCheckConfig(VerifyMariaDbBackupsConfig config)
   {
     // TODO: [ABSTRACT] (VerifyMariaDbBackups.GetDbCheckConfig) Use abstraction for this
@@ -147,8 +142,10 @@ class VerifyMariaDbBackups : IRunnableJob
 
 class VerifyMariaDbBackupsConfig
 {
+  [JobDbConfig("configFile")]
   public string ConfigFile { get; set; } = string.Empty;
 
+  [JobDbConfig("NextRunTemplate")]
   public string NextRunTemplate { get; set; } = string.Empty;
 
   public bool IsValid()

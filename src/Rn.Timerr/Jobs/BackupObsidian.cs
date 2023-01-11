@@ -1,6 +1,7 @@
 using Rn.Timerr.Enums;
 using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
+using Rn.Timerr.Utils;
 
 namespace Rn.Timerr.Jobs;
 
@@ -19,9 +20,9 @@ internal class BackupObsidian : IRunnableJob
   // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    var config = MapConfiguration(options);
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
+    var config = RunningJobUtils.MapConfiguration<BackupObsidianConfig>(options);
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
 
@@ -34,18 +35,11 @@ internal class BackupObsidian : IRunnableJob
     options.ScheduleNextRunInXHours(12);
     return jobOutcome.AsSucceeded();
   }
-
-
-  // Internal methods
-  private static BackupObsidianConfig MapConfiguration(RunningJobOptions options) =>
-    new()
-    {
-      SshCredentials = options.Config.GetStringValue("ssh.creds")
-    };
 }
 
 class BackupObsidianConfig
 {
+  [JobDbConfig("ssh.creds")]
   public string SshCredentials { get; set; } = string.Empty;
 
   public bool IsValid() => !string.IsNullOrWhiteSpace(SshCredentials);

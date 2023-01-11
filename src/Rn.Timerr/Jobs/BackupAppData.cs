@@ -1,6 +1,7 @@
 using Rn.Timerr.Enums;
 using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
+using Rn.Timerr.Utils;
 
 namespace Rn.Timerr.Jobs;
 
@@ -21,7 +22,7 @@ class BackupAppData : IRunnableJob
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
-    var config = MapConfiguration(options);
+    var config = RunningJobUtils.MapConfiguration<BackupAppDataConfig>(options);
 
     if (!config.IsValid())
       return jobOutcome.WithError("Missing required configuration");
@@ -45,14 +46,6 @@ class BackupAppData : IRunnableJob
 
 
   // Internal methods
-  private static BackupAppDataConfig MapConfiguration(RunningJobOptions options) =>
-    new()
-    {
-      Folders = options.Config.GetStringCollection("directory"),
-      BackupDestRoot = options.Config.GetStringValue("backupDestRoot"),
-      SshCredsName = options.Config.GetStringValue("ssh.creds")
-    };
-
   private static string GenerateBackupDestPath(BackupAppDataConfig config, string directory)
   {
     var generated = Path.Join(config.BackupDestRoot, directory)
@@ -67,8 +60,13 @@ class BackupAppData : IRunnableJob
 
 class BackupAppDataConfig
 {
+  [JobDbConfig("directory", JobDbConfigType.StringArray)]
   public List<string> Folders { get; set; } = new();
+
+  [JobDbConfig("backupDestRoot")]
   public string BackupDestRoot { get; set; } = string.Empty;
+
+  [JobDbConfig("ssh.creds")]
   public string SshCredsName { get; set; } = string.Empty;
 
   public bool IsValid()

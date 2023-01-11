@@ -2,6 +2,7 @@ using System.Data.SqlClient;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Factories;
 using Rn.Timerr.Models;
+using Rn.Timerr.Utils;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
@@ -24,7 +25,7 @@ internal class BackupSonarQube : IRunnableJob
   // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
-    var config = MapConfiguration(options);
+    var config = RunningJobUtils.MapConfiguration<BackupSonarQubeConfig>(options);
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
 
     if (!config.IsValid())
@@ -39,13 +40,6 @@ internal class BackupSonarQube : IRunnableJob
 
 
   // Internal methods
-  private static BackupSonarQubeConfig MapConfiguration(RunningJobOptions options) =>
-    new()
-    {
-      SqlConnectionString = options.Config.GetStringValue("SqlConnection"),
-      SshConnectionName = options.Config.GetStringValue("ssh.creds")
-    };
-
   private async Task CreateDbBackupAsync(BackupSonarQubeConfig config)
   {
     var sqlConnection = new SqlConnection(config.SqlConnectionString);
@@ -75,7 +69,10 @@ internal class BackupSonarQube : IRunnableJob
 
 class BackupSonarQubeConfig
 {
+  [JobDbConfig("SqlConnection")]
   public string SqlConnectionString { get; set; } = string.Empty;
+
+  [JobDbConfig("ssh.creds")]
   public string SshConnectionName { get; set; } = string.Empty;
 
   public bool IsValid()
