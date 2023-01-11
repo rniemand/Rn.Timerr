@@ -45,11 +45,17 @@ class JobStateService : IJobStateService
       return;
 
     // Persist the last and next run date for the current job
-    jobEntity.NextRun = options.State.GetDateTimeOffsetValue("NextRunTime");
+    jobEntity.NextRun = options.State.GetDateTimeOffsetValue(RnTimerrStatic.NextRunTime);
     jobEntity.LastRun = DateTimeOffset.Now;
     await _jobsRepo.SetNextRunDate(jobEntity);
 
-    // Persist additional state values for the current job
+    // Remove the "NextRunTime" job state as it is saved to the Jobs table
+    options.State.RemoveKey(RnTimerrStatic.NextRunTime);
+    stateEntries = options.State.GetStateEntities();
+    if (stateEntries.Count == 0)
+      return;
+
+    // If there are any remaining state values we will need to persist them
     _logger.LogInformation("Persisting {count} state entries", stateEntries.Count);
     var dbConfig = await _stateRepo.GetAllStateAsync(options.ConfigKey, options.Host);
 

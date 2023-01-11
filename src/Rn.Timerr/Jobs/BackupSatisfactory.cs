@@ -73,7 +73,7 @@ class BackupSatisfactory : IRunnableJob
     _logger.LogInformation("Completed: {path} ({size})", fileName, new FileInfo(fileName).Length);
 
     var nextRunTime = DateTimeOffset.Now.AddMinutes(_tickIntervalMin);
-    options.State.SetValue("NextRunTime", nextRunTime);
+    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
     _logger.LogDebug("Scheduled next tick for: {time}", nextRunTime);
 
     return new RunningJobResult(JobOutcome.Succeeded);

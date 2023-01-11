@@ -151,7 +151,7 @@ class VerifyMariaDbBackups : IRunnableJob
       .Replace("MM", tomorrow.Month.ToString().PadLeft(2, '0'))
       .Replace("dd", tomorrow.Day.ToString().PadLeft(2, '0')));
 
-    options.State.SetValue("NextRunTime", nextRunTime);
+    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
     _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
 }

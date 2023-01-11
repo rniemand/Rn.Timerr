@@ -51,7 +51,7 @@ internal class BackupObsidian : IRunnableJob
   private void ScheduleNextRunTime(RunningJobOptions options)
   {
     var nextRunTime = DateTimeOffset.Now.AddHours(12);
-    options.State.SetValue("NextRunTime", nextRunTime);
+    options.State.SetValue(RnTimerrStatic.NextRunTime, nextRunTime);
     _logger.LogInformation("Scheduled next run time for: {time}", nextRunTime);
   }
 }

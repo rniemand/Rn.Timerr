@@ -53,5 +53,13 @@ class RunningJobState
     _state[key].Value = value.ToString("O");
   }
 
+  public void RemoveKey(string key)
+  {
+    if(!_state.ContainsKey(key))
+      return;
+
+    _state.Remove(key);
+  }
+
   public List<StateEntity> GetStateEntities() => _state.Keys.Select(key => _state[key]).ToList();
 }
