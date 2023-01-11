@@ -50,6 +50,14 @@ class JobConfig
     return _config[key].Type.ToLower() == DbValueType.String;
   }
 
+  public bool HasDateTimeValue(string key)
+  {
+    if (!_config.ContainsKey(key))
+      return false;
+
+    return _config[key].Type.ToLower() == DbValueType.DateTime;
+  }
+
   public bool HasIntValue(string key)
   {
     if (!_config.ContainsKey(key))
@@ -87,6 +95,9 @@ class JobConfig
 
     return bool.TryParse(_config[key].Value, out var parsed) ? parsed : fallback;
   }
+
+  public DateTimeOffset GetDateTimeOffsetValue(string key, DateTimeOffset fallback) =>
+    !HasDateTimeValue(key) ? fallback : DateTimeOffset.Parse(_config[key].Value);
 
   public int GetOptionCount() => _config.Count;
 }

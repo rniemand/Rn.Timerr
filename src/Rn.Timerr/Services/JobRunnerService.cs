@@ -60,30 +60,27 @@ class JobRunnerService : IJobRunnerService
       if (!_enabledJobs.Any(x => x.JobName.IgnoreCaseEquals(job.ConfigKey)))
         continue;
 
-      var builder = new JobMetricBuilder(job.ConfigKey)
+      var metricBuilder = new JobMetricBuilder(job.ConfigKey)
         .WithWasRun(false)
         .WithJobSucceeded(false);
 
       try
       {
-        using (builder.WithTiming())
+        using (metricBuilder.WithTiming())
         {
-          var jobOptions = new RunningJobOptions(job.ConfigKey, _config.Host)
-          {
-            Config = await _jobConfigService.GetJobConfig(job.ConfigKey),
-            State = await _jobStateService.GetJobStateAsync(job.ConfigKey),
-            JobStartTime = DateTimeOffset.Now
-          };
-
-          builder.WithOptionsCount(jobOptions.Config.GetOptionCount());
-          if (!job.CanRun(jobOptions))
+          // Fetch the job from the DB and see if we can run it now...
+          var dbJob = await _jobsRepo.GetJobAsync(_config.Host, job.Name);
+          if (!CanRunJobNow(dbJob))
             continue;
 
+          // Load all available job options from the DB...
           _logger.LogInformation("Running Job: {name}", job.Name);
+          var jobOptions = await GetJobOptionsAsync(job);
           var jobResult = await job.RunAsync(jobOptions);
 
-          builder
+          metricBuilder
             .WithWasRun(true)
+            .WithOptionsCount(jobOptions.Config.GetOptionCount())
             .WithJobSucceeded(jobResult.Outcome == JobOutcome.Succeeded);
 
           if (jobResult.Outcome != JobOutcome.Succeeded)
@@ -92,16 +89,16 @@ class JobRunnerService : IJobRunnerService
             return;
           }
 
-          await _jobStateService.PersistStateAsync(jobOptions);
+          await _jobStateService.PersistStateAsync(dbJob, jobOptions);
         }
       }
       catch (Exception ex)
       {
-        builder.WithException(ex);
+        metricBuilder.WithException(ex);
       }
       finally
       {
-        await _metricsService.SubmitAsync(builder);
+        await _metricsService.SubmitAsync(metricBuilder);
       }
     }
   }
@@ -130,4 +127,14 @@ class JobRunnerService : IJobRunnerService
       await _metricsService.SubmitAsync(builder);
     }
   }
+
+  private async Task<RunningJobOptions> GetJobOptionsAsync(IRunnableJob job) =>
+    new(job.ConfigKey, _config.Host)
+    {
+      Config = await _jobConfigService.GetJobConfig(job.ConfigKey),
+      State = await _jobStateService.GetJobStateAsync(job.ConfigKey),
+      JobStartTime = DateTimeOffset.Now
+    };
+
+  private static bool CanRunJobNow(JobEntity jobEntity) => DateTimeOffset.Now >= jobEntity.NextRun;
 }

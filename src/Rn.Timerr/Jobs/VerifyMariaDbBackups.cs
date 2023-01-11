@@ -31,20 +31,6 @@ class VerifyMariaDbBackups : IRunnableJob
 
 
   // Interface methods
-  public bool CanRun(RunningJobOptions options)
-  {
-    if (!options.State.ContainsKey("NextRunTime"))
-      return true;
-
-    var nextRunTime = options.State.GetDateTimeOffsetValue("NextRunTime");
-
-    if (nextRunTime > options.JobStartTime)
-      return false;
-
-    _logger.LogDebug("Current time {now} > {runTime} (Running Job)", options.JobStartTime, nextRunTime);
-    return true;
-  }
-
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);

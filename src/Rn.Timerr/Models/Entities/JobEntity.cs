@@ -6,6 +6,6 @@ class JobEntity
   public bool Enabled { get; set; }
   public string Host { get; set; } = string.Empty;
   public string JobName { get; set; } = string.Empty;
-  public DateTime NextRun { get; set; } = DateTime.MinValue;
-  public DateTime LastRun { get; set; } = DateTime.MinValue;
+  public DateTimeOffset NextRun { get; set; } = DateTime.MinValue;
+  public DateTimeOffset LastRun { get; set; } = DateTime.MinValue;
 }

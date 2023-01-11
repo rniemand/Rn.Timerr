@@ -1,6 +1,7 @@
 using Rn.Timerr.Extensions;
 using Rn.Timerr.Models;
 using Rn.Timerr.Models.Config;
+using Rn.Timerr.Models.Entities;
 using Rn.Timerr.Repos;
 using RnCore.Logging;
 
@@ -9,36 +10,46 @@ namespace Rn.Timerr.Services;
 interface IJobStateService
 {
   Task<RunningJobState> GetJobStateAsync(string configKey);
-  Task PersistStateAsync(RunningJobOptions options);
+  Task PersistStateAsync(JobEntity jobEntity, RunningJobOptions options);
 }
 
 class JobStateService : IJobStateService
 {
   private readonly ILoggerAdapter<JobStateService> _logger;
   private readonly IStateRepo _stateRepo;
+  private readonly IJobsRepo _jobsRepo;
   private readonly RnTimerrConfig _config;
 
   public JobStateService(ILoggerAdapter<JobStateService> logger,
     IStateRepo stateRepo,
+    IJobsRepo jobsRepo,
     RnTimerrConfig config)
   {
     _logger = logger;
     _stateRepo = stateRepo;
+    _jobsRepo = jobsRepo;
     _config = config;
   }
 
+  // Interface methods
   public async Task<RunningJobState> GetJobStateAsync(string configKey)
   {
     var jobState = await _stateRepo.GetAllStateAsync(configKey, _config.Host);
     return new RunningJobState(configKey, _config.Host, jobState);
   }
 
-  public async Task PersistStateAsync(RunningJobOptions options)
+  public async Task PersistStateAsync(JobEntity jobEntity, RunningJobOptions options)
   {
     var stateEntries = options.State.GetStateEntities();
     if (stateEntries.Count == 0)
       return;
 
+    // Persist the last and next run date for the current job
+    jobEntity.NextRun = options.State.GetDateTimeOffsetValue("NextRunTime");
+    jobEntity.LastRun = DateTimeOffset.Now;
+    await _jobsRepo.SetNextRunDate(jobEntity);
+
+    // Persist additional state values for the current job
     _logger.LogInformation("Persisting {count} state entries", stateEntries.Count);
     var dbConfig = await _stateRepo.GetAllStateAsync(options.ConfigKey, options.Host);
 
