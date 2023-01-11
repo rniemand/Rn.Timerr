@@ -144,11 +144,11 @@ class VerifyMariaDbBackups : IRunnableJob
   // Supporting classes
   class Config
   {
-    [JobDbConfig("configFile")]
+    [StringConfig("configFile")]
     [StringValidator]
     public string ConfigFile { get; set; } = string.Empty;
 
-    [JobDbConfig("NextRunTemplate")]
+    [StringConfig("NextRunTemplate")]
     [StringValidator]
     public string NextRunTemplate { get; set; } = string.Empty;
   }

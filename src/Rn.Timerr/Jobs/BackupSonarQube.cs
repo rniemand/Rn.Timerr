@@ -72,11 +72,11 @@ internal class BackupSonarQube : IRunnableJob
 
 class BackupSonarQubeConfig
 {
-  [JobDbConfig("SqlConnection")]
+  [StringConfig("SqlConnection")]
   [StringValidator]
   public string SqlConnectionString { get; set; } = string.Empty;
 
-  [JobDbConfig("ssh.creds")]
+  [StringConfig("ssh.creds")]
   [StringValidator]
   public string SshConnectionName { get; set; } = string.Empty;
 }

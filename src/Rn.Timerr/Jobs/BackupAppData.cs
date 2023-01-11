@@ -29,7 +29,7 @@ class BackupAppData : IRunnableJob
       return jobOutcome.WithError(validationOutcome.ValidationError);
 
     // Run job logic...
-    var sshClient = await _sshClientFactory.GetSshClient(config.SshCredsName);
+    var sshClient = await _sshClientFactory.GetSshClient(config.SshCredentials);
     foreach (var folder in config.Folders)
     {
       var directory = Path.GetFileName(folder);
@@ -63,16 +63,16 @@ class BackupAppData : IRunnableJob
   // Supporting Classes
   class Config
   {
-    [JobDbConfig("directory", JobDbConfigType.StringArray)]
+    [StringArrayConfig("directory")]
     [StringArrayValidator(1)]
     public string[] Folders { get; set; } = Array.Empty<string>();
 
-    [JobDbConfig("backupDestRoot")]
+    [StringConfig("backupDestRoot")]
     [StringValidator]
     public string BackupDestRoot { get; set; } = string.Empty;
 
-    [JobDbConfig("ssh.creds")]
+    [StringConfig("ssh.creds")]
     [StringValidator]
-    public string SshCredsName { get; set; } = string.Empty;
+    public string SshCredentials { get; set; } = string.Empty;
   }
 }

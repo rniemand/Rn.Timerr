@@ -194,29 +194,29 @@ class BackupSatisfactory : IRunnableJob
   // Supporting classes
   class Config
   {
-    [JobDbConfig("Source")]
+    [StringConfig("Source")]
     [StringValidator]
     public string SourcePath { get; set; } = string.Empty;
 
-    [JobDbConfig("Destination")]
+    [StringConfig("Destination")]
     [StringValidator]
     public string Destination { get; set; } = string.Empty;
 
-    [JobDbConfig("BackupFileName")]
+    [StringConfig("BackupFileName")]
     [StringValidator]
     public string BackupFileName { get; set; } = string.Empty;
 
-    [JobDbConfig("TickIntervalMin", JobDbConfigType.Int, IntFallback = 10)]
+    [IntConfig("TickIntervalMin", Fallback = 10)]
     [IntValidator(10)]
     public int TickIntervalMin { get; set; } = 10;
 
-    [JobDbConfig("OverwriteExisting", JobDbConfigType.Bool)]
+    [BoolConfig("OverwriteExisting")]
     public bool OverwriteExisting { get; set; }
 
-    [JobDbConfig("ManageSaves", JobDbConfigType.Bool)]
+    [BoolConfig("ManageSaves")]
     public bool ManageSaves { get; set; }
 
-    [JobDbConfig("ManageSaveRx", JobDbConfigType.Regex, RegexOptions = RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [RegexConfig("ManageSaveRx", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     public Regex ManageSavesRx { get; set; } = new(".*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
   }
 }

@@ -40,7 +40,7 @@ internal class BackupObsidian : IRunnableJob
   // Supporting classes
   class Config
   {
-    [JobDbConfig("ssh.creds")]
+    [StringConfig("ssh.creds")]
     [StringValidator]
     public string SshCredentials { get; set; } = string.Empty;
   }

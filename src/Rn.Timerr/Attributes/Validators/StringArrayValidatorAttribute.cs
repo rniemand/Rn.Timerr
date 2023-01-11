@@ -1,5 +1,5 @@
 using Rn.Timerr.Enums;
-using Rn.Timerr.Utils;
+using Rn.Timerr.Models;
 
 namespace Rn.Timerr.Attributes;
 
