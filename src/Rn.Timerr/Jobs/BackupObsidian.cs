@@ -41,7 +41,7 @@ internal class BackupObsidian : IRunnableJob
 
 
   // Supporting classes
-  private class Config
+  private sealed class Config
   {
     [StringConfig("ssh.creds")]
     [StringValidator]

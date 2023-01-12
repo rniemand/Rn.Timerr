@@ -150,7 +150,7 @@ class VerifyMariaDbBackups : IRunnableJob
 
 
   // Supporting classes
-  class Config
+  private sealed class Config
   {
     [StringConfig("configFile")]
     [StringValidator]
@@ -161,7 +161,7 @@ class VerifyMariaDbBackups : IRunnableJob
     public string NextRunTemplate { get; set; } = string.Empty;
   }
 
-  class JsonConfig
+  private sealed class JsonConfig
   {
     [JsonProperty("Mail")]
     public MailSettings MailConfig { get; set; } = new MailSettings();

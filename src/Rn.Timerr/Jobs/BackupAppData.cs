@@ -61,7 +61,7 @@ class BackupAppData : IRunnableJob
     return generated;
   }
 
-  private class Config
+  private sealed class Config
   {
     [StringArrayConfig("directory")]
     [StringArrayValidator(1)]

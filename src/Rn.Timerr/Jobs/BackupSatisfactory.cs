@@ -181,7 +181,7 @@ class BackupSatisfactory : IRunnableJob
     return true;
   }
 
-  private string GenerateFileName(RunningJobOptions runningJobConfig, Config config) => config.BackupFileName
+  private static string GenerateFileName(RunningJobOptions runningJobConfig, Config config) => config.BackupFileName
     .Replace("{yyyy}", runningJobConfig.JobStartTime.Year.ToString("D"))
     .Replace("{mm}", runningJobConfig.JobStartTime.Month.ToString("D").PadLeft(2, '0'))
     .Replace("{dd}", runningJobConfig.JobStartTime.Day.ToString("D").PadLeft(2, '0'))
@@ -191,7 +191,7 @@ class BackupSatisfactory : IRunnableJob
 
 
   // Supporting classes
-  class Config
+  private sealed class Config
   {
     [StringConfig("Source")]
     [StringValidator]
