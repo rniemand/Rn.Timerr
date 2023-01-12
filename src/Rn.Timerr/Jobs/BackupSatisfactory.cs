@@ -6,6 +6,7 @@ using Rn.Timerr.Exceptions;
 using Rn.Timerr.Models;
 using Rn.Timerr.Utils;
 using RnCore.Abstractions;
+using RnCore.Abstractions.Utils;
 using RnCore.Logging;
 
 namespace Rn.Timerr.Jobs;
@@ -31,6 +32,8 @@ class BackupSatisfactory : IRunnableJob
     _path = path;
   }
 
+
+  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var config = RunningJobUtils.MapConfiguration<Config>(options);
@@ -92,16 +95,14 @@ class BackupSatisfactory : IRunnableJob
 
     var fileDateRanges = manageableFiles
       .OrderBy(f => f.LastWriteTime)
-      .Select(f => ToStartOfDay(f.LastWriteTime))
+      .Select(f => DateUtils.ToStartOfDay(f.LastWriteTime))
       .Distinct()
       .ToList();
 
     foreach (var baseDate in fileDateRanges)
-      ManageDaysSaveFiles(managedSavesDir, manageableFiles.Where(f => ToStartOfDay(f.LastWriteTime) == baseDate));
+      ManageDaysSaveFiles(managedSavesDir, manageableFiles.Where(f => DateUtils.ToStartOfDay(f.LastWriteTime) == baseDate));
   }
 
-
-  // Helper methods
   private void ManageDaysSaveFiles(string manageDir, IEnumerable<FileInfo> files)
   {
     var saveFiles = files
@@ -112,7 +113,7 @@ class BackupSatisfactory : IRunnableJob
       return;
 
     var lastDailySaveFile = saveFiles.Last();
-    var dateString = ToStartOfDay(lastDailySaveFile.LastWriteTime).ToString("yyyy-MM-dd");
+    var dateString = DateUtils.ToStartOfDay(lastDailySaveFile.LastWriteTime).ToString("yyyy-MM-dd");
     _logger.LogInformation("Selecting '{lastSave}' as daily save file for {date}", lastDailySaveFile.Name, dateString);
 
     var filePath = _path.Combine(manageDir, $"Satisfactory_Daily_{dateString}.zip");
@@ -124,8 +125,6 @@ class BackupSatisfactory : IRunnableJob
       _file.Delete(saveFile);
     }
   }
-
-  private static DateTime ToStartOfDay(DateTime date) => new(date.Year, date.Month, date.Day);
 
   private List<FileInfo> GetManageableFiles(Config config)
   {
@@ -142,7 +141,7 @@ class BackupSatisfactory : IRunnableJob
       filteredFiles.Add(saveFile);
     }
 
-    var startOfDay = ToStartOfDay(DateTime.Now);
+    var startOfDay = DateUtils.ToStartOfDay(DateTime.Now);
 
     return filteredFiles
       .Select(filteredSaveFile => new FileInfo(filteredSaveFile))

@@ -18,6 +18,8 @@ internal class BackupObsidian : IRunnableJob
     _sshClientFactory = sshClientFactory;
   }
 
+
+  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
@@ -37,8 +39,9 @@ internal class BackupObsidian : IRunnableJob
     return jobOutcome.AsSucceeded();
   }
 
+
   // Supporting classes
-  class Config
+  private class Config
   {
     [StringConfig("ssh.creds")]
     [StringValidator]

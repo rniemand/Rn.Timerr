@@ -36,26 +36,29 @@ static class ServiceCollectionExtensions
       .AddSingleton<IDateTimeAbstraction, DateTimeAbstraction>()
       .AddSingleton<IPathAbstraction, PathAbstraction>()
 
-      // Factories
-      .AddSingleton<ISshClientFactory, SshClientFactory>()
-
-      // Services
-      .AddSingleton<IJobRunnerService, JobRunnerService>()
-      .AddSingleton<IJobConfigService, JobConfigService>()
-      .AddSingleton<IJobStateService, JobStateService>()
-      .AddSingleton<ICredentialsService, CredentialsService>()
-      
       // Database
       .AddSingleton<IConnectionFactory, ConnectionFactory>()
       .AddSingleton<IConfigRepo, ConfigRepo>()
       .AddSingleton<IStateRepo, StateRepo>()
       .AddSingleton<IJobsRepo, JobsRepo>()
       .AddSingleton<ICredentialsRepo, CredentialsRepo>()
-      
+
+      // Factories
+      .AddSingleton<ISshClientFactory, SshClientFactory>()
+
+      // Helpers
+      .AddSingleton<IJsonHelper, JsonHelper>()
+
+      // Services
+      .AddSingleton<IJobRunnerService, JobRunnerService>()
+      .AddSingleton<IJobConfigService, JobConfigService>()
+      .AddSingleton<IJobStateService, JobStateService>()
+      .AddSingleton<ICredentialsService, CredentialsService>()
+
       // Register runnable jobs
       .RegisterImplementations(Assembly.GetExecutingAssembly(), typeof(IRunnableJob));
   }
-  
+
   private static IServiceCollection RegisterImplementations(this IServiceCollection me, Assembly? assembly, Type targetType)
   {
     if (assembly is null)

@@ -21,7 +21,9 @@ internal class BackupSonarQube : IRunnableJob
     _logger = logger;
     _sshClientFactory = sshClientFactory;
   }
-  
+
+
+  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);

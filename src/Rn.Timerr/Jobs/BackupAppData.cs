@@ -18,6 +18,8 @@ class BackupAppData : IRunnableJob
     _sshClientFactory = sshClientFactory;
   }
 
+
+  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var jobOutcome = new RunningJobResult(JobOutcome.Failed);
@@ -47,7 +49,7 @@ class BackupAppData : IRunnableJob
   }
 
 
-  // Internal methods
+  // Internal methods & supporting classes
   private static string GenerateBackupDestPath(Config config, string directory)
   {
     var generated = Path.Join(config.BackupDestRoot, directory)
@@ -59,9 +61,7 @@ class BackupAppData : IRunnableJob
     return generated;
   }
 
-
-  // Supporting Classes
-  class Config
+  private class Config
   {
     [StringArrayConfig("directory")]
     [StringArrayValidator(1)]

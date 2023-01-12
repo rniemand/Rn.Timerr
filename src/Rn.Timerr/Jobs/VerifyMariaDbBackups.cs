@@ -3,6 +3,7 @@ using Rn.Timerr.Attributes;
 using Rn.Timerr.Enums;
 using Rn.Timerr.Models;
 using Rn.Timerr.Utils;
+using RnCore.Abstractions;
 using RnCore.Logging;
 using RnCore.Mailer.Builders;
 using RnCore.Mailer.Config;
@@ -18,19 +19,27 @@ class VerifyMariaDbBackups : IRunnableJob
   private readonly ILoggerAdapter<VerifyMariaDbBackups> _logger;
   private readonly IMailTemplateHelper _mailTemplateHelper;
   private readonly IRnMailUtilsFactory _mailUtilsFactory;
+  private readonly IFileAbstraction _file;
+  private readonly IJsonHelper _jsonHelper;
   private readonly RnMailConfig _mailConfig;
 
   public VerifyMariaDbBackups(ILoggerAdapter<VerifyMariaDbBackups> logger,
     IMailTemplateHelper mailTemplateHelper,
     RnMailConfig mailConfig,
-    IRnMailUtilsFactory mailUtilsFactory)
+    IRnMailUtilsFactory mailUtilsFactory,
+    IFileAbstraction file,
+    IJsonHelper jsonHelper)
   {
     _logger = logger;
     _mailTemplateHelper = mailTemplateHelper;
     _mailConfig = mailConfig;
     _mailUtilsFactory = mailUtilsFactory;
+    _file = file;
+    _jsonHelper = jsonHelper;
   }
 
+
+  // Interface methods
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
     var outcome = new RunningJobResult(JobOutcome.Failed);
@@ -48,7 +57,7 @@ class VerifyMariaDbBackups : IRunnableJob
     foreach (var rule in checkConfig.Rules)
     {
       // Ensure that the backup file exists
-      if (!File.Exists(rule.FilePath))
+      if (!_file.Exists(rule.FilePath))
       {
         await SendFileNotFoundEmail(checkConfig, rule);
         continue;
@@ -70,14 +79,13 @@ class VerifyMariaDbBackups : IRunnableJob
 
 
   // Internal methods
-  private static JsonConfig GetDbCheckConfig(Config config)
+  private JsonConfig GetDbCheckConfig(Config config)
   {
-    // TODO: [ABSTRACT] (VerifyMariaDbBackups.GetDbCheckConfig) Use abstraction for this
-    if (!File.Exists(config.ConfigFile))
+    if (!_file.Exists(config.ConfigFile))
       return new JsonConfig();
 
-    var rawJson = File.ReadAllText(config.ConfigFile);
-    var parsedConfig = JsonConvert.DeserializeObject<JsonConfig>(rawJson);
+    var rawJson = _file.ReadAllText(config.ConfigFile);
+    var parsedConfig = _jsonHelper.DeserializeObject<JsonConfig>(rawJson);
 
     foreach (var rule in parsedConfig!.Rules)
     {
