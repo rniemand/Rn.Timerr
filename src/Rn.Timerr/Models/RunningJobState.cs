@@ -4,7 +4,7 @@ using Rn.Timerr.Models.Entities;
 
 namespace Rn.Timerr.Models;
 
-class RunningJobState
+public class RunningJobState
 {
   private readonly Dictionary<string, StateEntity> _state = new(StringComparer.InvariantCultureIgnoreCase);
   private readonly string _category;

@@ -1,6 +1,6 @@
 namespace Rn.Timerr.Models.Entities;
 
-class ConfigEntity
+public class ConfigEntity
 {
   public string Category { get; set; } = string.Empty;
   public string Key { get; set; } = string.Empty;
