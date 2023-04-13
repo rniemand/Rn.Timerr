@@ -29,9 +29,13 @@ class RunSshCommands : IRunnableJob
 
   public async Task<RunningJobResult> RunAsync(RunningJobOptions options)
   {
+    await LoadEnabledJobsAsync(options);
+
     var jobOutcome = new RunningJobResult(JobOutcome.Succeeded);
 
-    await LoadEnabledJobsAsync(options);
+    foreach (var command in GetRunnableCommands())
+      await RunCommandAsync(options, command);
+
 
 
     options.ScheduleNextRunInXMinutes(1);
@@ -56,5 +60,29 @@ class RunSshCommands : IRunnableJob
   private async Task LoadCommandActionsAsync(RunningJobOptions options)
   {
     _commandActionEntries.AddRange(await _sshCommandsActionsRepo.GetEnabledCommandActions(options.Host));
+  }
+
+  private List<SshCommandEntity> GetRunnableCommands()
+  {
+    return _sshCommands.Where(x => x.NextRun <= DateTimeOffset.Now).ToList();
+  }
+
+  private List<SshCommandsActionEntity> GetCommandActions(SshCommandEntity command)
+  {
+    return _commandActionEntries.Where(x => x.JobID.Equals(command.JobID)).OrderBy(x => x.RunOrder).ToList();
+  }
+
+  private async Task RunCommandAsync(RunningJobOptions options, SshCommandEntity command)
+  {
+    var actions = GetCommandActions(command);
+    if (!actions.Any())
+      throw new Exception("This command has no actions to execute!");
+
+    var sshClient = await _sshClientFactory.GetSshClient(command.CredentialName);
+
+
+
+    Console.WriteLine();
+    Console.WriteLine();
   }
 }
