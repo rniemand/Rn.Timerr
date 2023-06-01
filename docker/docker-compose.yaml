@@ -1,5 +1,5 @@
 version: '3.6'
-
+name: rn-timerr
 services:
   db:
     image: mariadb:latest
