@@ -11,7 +11,7 @@ using RnCore.Mailer.Factories;
 
 namespace Rn.Timerr.Jobs;
 
-class VerifyMariaDbBackups : IRunnableJob
+public class VerifyMariaDbBackups : IRunnableJob
 {
   public string Name => nameof(VerifyMariaDbBackups);
   public string ConfigKey => nameof(VerifyMariaDbBackups);

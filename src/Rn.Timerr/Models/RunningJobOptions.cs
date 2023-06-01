@@ -1,6 +1,6 @@
 namespace Rn.Timerr.Models;
 
-class RunningJobOptions
+public class RunningJobOptions
 {
   public string ConfigKey { get; set; }
   public string Host { get; set; }

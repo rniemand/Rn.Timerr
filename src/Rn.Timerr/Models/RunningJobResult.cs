@@ -2,7 +2,7 @@ using Rn.Timerr.Enums;
 
 namespace Rn.Timerr.Models;
 
-class RunningJobResult
+public class RunningJobResult
 {
   public JobOutcome Outcome { get; set; } = JobOutcome.Failed;
   public string Error { get; set; } = string.Empty;

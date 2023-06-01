@@ -68,3 +68,19 @@ VALUES
 	('BackupAppData', 'ssh.creds',      0, 'Dev', 'string',  'SshNas');
 
 INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('BackupAppData', 'Dev', 1);
+
+
+-- ===============================================================================================================================
+-- Run SSH Commands
+-- ===============================================================================================================================
+INSERT INTO `Jobs` (`JobName`, `Host`, `Enabled`) VALUES ('RunSshCommands', 'Dev', 0);
+
+INSERT INTO `SshCommands`
+	(`Enabled`, `Host`, `CredentialName`, `JobID`, `JobName`, `ScheduleExpression`)
+VALUES
+	(1, 'Dev', 'SshNas', 'chmod-media-12-hours', 'CHMOD Media every 12 hours', 'interval:hours:12@start');
+
+INSERT INTO `SshCommandsActions`
+	(`JobID`, `RunOrder`, `Host`, `StopOnError`, `Command`)
+VALUES
+	('chmod-media-12-hours', 1, 'Dev', 1, 'chmod -R 0777 /mnt/user/Media/');

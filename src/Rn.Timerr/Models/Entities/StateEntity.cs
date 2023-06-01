@@ -1,6 +1,6 @@
-﻿namespace Rn.Timerr.Models.Entities;
+namespace Rn.Timerr.Models.Entities;
 
-class StateEntity
+public class StateEntity
 {
   public string Category { get; set; } = string.Empty;
   public string Key { get; set; } = string.Empty;

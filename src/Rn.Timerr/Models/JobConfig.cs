@@ -3,7 +3,7 @@ using Rn.Timerr.Models.Entities;
 
 namespace Rn.Timerr.Models;
 
-class JobConfig
+public class JobConfig
 {
   private readonly Dictionary<string, ConfigEntity> _config = new(StringComparer.InvariantCultureIgnoreCase);
   private readonly Dictionary<string, List<ConfigEntity>> _collectionConfig = new(StringComparer.InvariantCultureIgnoreCase);

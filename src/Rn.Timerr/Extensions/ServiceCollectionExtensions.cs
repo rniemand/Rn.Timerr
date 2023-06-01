@@ -42,6 +42,8 @@ static class ServiceCollectionExtensions
       .AddSingleton<IStateRepo, StateRepo>()
       .AddSingleton<IJobsRepo, JobsRepo>()
       .AddSingleton<ICredentialsRepo, CredentialsRepo>()
+      .AddSingleton<ISshCommandsRepo, SshCommandsRepo>()
+      .AddSingleton<ISshCommandsActionsRepo, SshCommandsActionsRepo>()
 
       // Factories
       .AddSingleton<ISshClientFactory, SshClientFactory>()

@@ -1,6 +1,6 @@
 namespace Rn.Timerr.Enums;
 
-enum JobOutcome
+public enum JobOutcome
 {
   Failed,
   Succeeded
