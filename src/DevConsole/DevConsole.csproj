@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="RnCore.Mailer" Version="6.0.1.100" />
+    <PackageReference Include="RnCore.Mailer" Version="6.0.1.101" />
   </ItemGroup>
 
   <ItemGroup>
